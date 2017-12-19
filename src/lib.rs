@@ -1,4 +1,4 @@
-// Copyright 2014-2016 The Rust Project Developers. See the COPYRIGHT
+// Copyright 2012-2015 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
 //
@@ -8,104 +8,112 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! A collection of numeric types and traits for Rust.
-//!
-//! This includes new types for big integers, rationals, and complex numbers,
-//! new traits for generic programming on numeric properties like `Integer`,
-//! and generic range iterators.
-//!
-//! ## Example
-//!
-//! This example uses the BigRational type and [Newton's method][newt] to
-//! approximate a square root to arbitrary precision:
-//!
-//! ```
-//! extern crate num;
-//! # #[cfg(all(feature = "bigint", feature="rational"))]
-//! # mod test {
-//!
-//! use num::FromPrimitive;
-//! use num::bigint::BigInt;
-//! use num::rational::{Ratio, BigRational};
-//!
-//! # pub
-//! fn approx_sqrt(number: u64, iterations: usize) -> BigRational {
-//!     let start: Ratio<BigInt> = Ratio::from_integer(FromPrimitive::from_u64(number).unwrap());
-//!     let mut approx = start.clone();
-//!
-//!     for _ in 0..iterations {
-//!         approx = (&approx + (&start / &approx)) /
-//!             Ratio::from_integer(FromPrimitive::from_u64(2).unwrap());
-//!     }
-//!
-//!     approx
-//! }
-//! # }
-//! # #[cfg(not(all(feature = "bigint", feature="rational")))]
-//! # mod test { pub fn approx_sqrt(n: u64, _: usize) -> u64 { n } }
-//! # use test::approx_sqrt;
-//!
-//! fn main() {
-//!     println!("{}", approx_sqrt(10, 4)); // prints 4057691201/1283082416
-//! }
-//!
-//! ```
-//!
-//! [newt]: https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
-#![doc(html_logo_url = "https://rust-num.github.io/num/rust-logo-128x128-blk-v2.png",
-       html_favicon_url = "https://rust-num.github.io/num/favicon.ico",
-       html_root_url = "https://rust-num.github.io/num/",
-       html_playground_url = "http://play.integer32.com/")]
+#![crate_type = "proc-macro"]
+#![doc(html_root_url = "https://docs.rs/num-derive/0.1")]
 
-extern crate num_traits;
-extern crate num_integer;
-extern crate num_iter;
-#[cfg(feature = "num-complex")]
-extern crate num_complex;
-#[cfg(feature = "num-bigint")]
-extern crate num_bigint;
-#[cfg(feature = "num-rational")]
-extern crate num_rational;
+extern crate syn;
+#[macro_use]
+extern crate quote;
+extern crate proc_macro;
 
-#[cfg(feature = "num-bigint")]
-pub use num_bigint::{BigInt, BigUint};
-#[cfg(feature = "num-rational")]
-pub use num_rational::Rational;
-#[cfg(all(feature = "num-rational", feature="num-bigint"))]
-pub use num_rational::BigRational;
-#[cfg(feature = "num-complex")]
-pub use num_complex::Complex;
-pub use num_integer::Integer;
-pub use num_iter::{range, range_inclusive, range_step, range_step_inclusive};
-pub use num_traits::{Num, Zero, One, Signed, Unsigned, Bounded,
-                     one, zero, abs, abs_sub, signum,
-                     Saturating, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
-                     PrimInt, Float, ToPrimitive, FromPrimitive, NumCast, cast,
-                     pow, checked_pow, clamp};
+use proc_macro::TokenStream;
 
-#[cfg(feature = "num-bigint")]
-pub mod bigint {
-    pub use num_bigint::*;
+use syn::Body::Enum;
+use syn::VariantData::Unit;
+
+#[proc_macro_derive(FromPrimitive)]
+pub fn from_primitive(input: TokenStream) -> TokenStream {
+    let source = input.to_string();
+
+    let ast = syn::parse_macro_input(&source).unwrap();
+    let name = &ast.ident;
+
+    let variants = match ast.body {
+        Enum(ref variants) => variants,
+        _ => panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum", name)
+    };
+
+    let mut idx = 0;
+    let variants: Vec<_> = variants.iter()
+        .map(|variant| {
+            let ident = &variant.ident;
+            match variant.data {
+                Unit => (),
+                _ => {
+                    panic!("`FromPrimitive` can be applied only to unitary enums, {}::{} is either struct or tuple", name, ident)
+                },
+            }
+            if let Some(val) = variant.discriminant {
+                idx = val.value;
+            }
+            let tt = quote!(#idx => Some(#name::#ident));
+            idx += 1;
+            tt
+        })
+        .collect();
+
+    let res = quote! {
+        impl ::num::traits::FromPrimitive for #name {
+            fn from_i64(n: i64) -> Option<Self> {
+                Self::from_u64(n as u64)
+            }
+
+            fn from_u64(n: u64) -> Option<Self> {
+                match n {
+                    #(variants,)*
+                    _ => None,
+                }
+            }
+        }
+    };
+
+    res.to_string().parse().unwrap()
 }
 
-#[cfg(feature = "num-complex")]
-pub mod complex {
-    pub use num_complex::*;
-}
+#[proc_macro_derive(ToPrimitive)]
+pub fn to_primitive(input: TokenStream) -> TokenStream {
+    let source = input.to_string();
 
-pub mod integer {
-    pub use num_integer::*;
-}
+    let ast = syn::parse_macro_input(&source).unwrap();
+    let name = &ast.ident;
 
-pub mod iter {
-    pub use num_iter::*;
-}
+    let variants = match ast.body {
+        Enum(ref variants) => variants,
+        _ => panic!("`ToPrimitive` can be applied only to the enums, {} is not an enum", name)
+    };
 
-pub mod traits {
-    pub use num_traits::*;
-}
+    let mut idx = 0;
+    let variants: Vec<_> = variants.iter()
+        .map(|variant| {
+            let ident = &variant.ident;
+            match variant.data {
+                Unit => (),
+                _ => {
+                    panic!("`ToPrimitive` can be applied only to unitary enums, {}::{} is either struct or tuple", name, ident)
+                },
+            }
+            if let Some(val) = variant.discriminant {
+                idx = val.value;
+            }
+            let tt = quote!(#name::#ident => #idx);
+            idx += 1;
+            tt
+        })
+        .collect();
 
-#[cfg(feature = "num-rational")]
-pub mod rational {
-    pub use num_rational::*;
+    let res = quote! {
+        impl ::num::traits::ToPrimitive for #name {
+            fn to_i64(&self) -> Option<i64> {
+                self.to_u64().map(|x| x as i64)
+            }
+
+            fn to_u64(&self) -> Option<u64> {
+                Some(match *self {
+                    #(variants,)*
+                })
+            }
+        }
+    };
+
+    res.to_string().parse().unwrap()
 }

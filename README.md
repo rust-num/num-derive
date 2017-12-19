@@ -1,14 +1,10 @@
-# num
+# num-derive
 
-[![](https://travis-ci.org/rust-num/num.svg)](https://travis-ci.org/rust-num/num)
+[![crate](https://img.shields.io/crates/v/num-derive.svg)](https://crates.io/crates/num-derive)
+[![documentation](https://docs.rs/num-derive/badge.svg)](https://docs.rs/num-derive)
+[![Travis status](https://travis-ci.org/rust-num/num-derive.svg?branch=master)](https://travis-ci.org/rust-num/num-derive)
 
-A collection of numeric types and traits for Rust.
-
-This includes new types for big integers, rationals, and complex numbers,
-new traits for generic programming on numeric properties like `Integer`,
-and generic range iterators.
-
-[Documentation](http://rust-num.github.io/num)
+Procedural macros to derive numeric traits in Rust.
 
 ## Usage
 
@@ -16,16 +12,16 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-num = "0.1"
+num-derive= "0.1"
 ```
 
 and this to your crate root:
 
 ```rust
-extern crate num;
+#[macro_use]
+extern crate num_derive;
 ```
 
 ## Compatibility
 
-Most of the `num` crates are tested for rustc 1.8 and greater.
-The exception is `num-derive` which requires at least rustc 1.15.
+The `num-derive` crate is tested for rustc 1.15 and greater.
