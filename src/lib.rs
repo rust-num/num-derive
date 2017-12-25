@@ -50,7 +50,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 
             let discriminant_expr = match variant.discriminant {
                 Some(ref const_expr) => {
-                    expr = quote! { #const_expr };
+                    expr = quote! { (#const_expr) as isize };
                     offset = 1;
                     expr.clone()
                 }
@@ -120,7 +120,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
 
             let discriminant_expr = match variant.discriminant {
                 Some(ref const_expr) => {
-                    expr = quote! { #const_expr };
+                    expr = quote! { (#const_expr) as isize };
                     offset = 1;
                     expr.clone()
                 }

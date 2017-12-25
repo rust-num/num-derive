@@ -17,26 +17,29 @@ enum Color {
     Red,
     Blue = 5,
     Green,
+    Alpha = (-3 - (-5isize)) - 10,
 }
 
 #[test]
 fn test_from_primitive_for_enum_with_custom_value() {
-    let v: [Option<Color>; 4] = [num_renamed::FromPrimitive::from_u64(0),
+    let v: [Option<Color>; 5] = [num_renamed::FromPrimitive::from_u64(0),
                                  num_renamed::FromPrimitive::from_u64(5),
                                  num_renamed::FromPrimitive::from_u64(6),
+                                 num_renamed::FromPrimitive::from_u64(-8isize as u64),
                                  num_renamed::FromPrimitive::from_u64(3)];
 
     assert_eq!(v,
-               [Some(Color::Red), Some(Color::Blue), Some(Color::Green), None]);
+               [Some(Color::Red), Some(Color::Blue), Some(Color::Green), Some(Color::Alpha), None]);
 }
 
 #[test]
 fn test_to_primitive_for_enum_with_custom_value() {
-    let v: [Option<u64>; 3] = [num_renamed::ToPrimitive::to_u64(&Color::Red),
+    let v: [Option<u64>; 4] = [num_renamed::ToPrimitive::to_u64(&Color::Red),
                                num_renamed::ToPrimitive::to_u64(&Color::Blue),
-                               num_renamed::ToPrimitive::to_u64(&Color::Green)];
+                               num_renamed::ToPrimitive::to_u64(&Color::Green),
+                               num_renamed::ToPrimitive::to_u64(&Color::Alpha)];
 
-    assert_eq!(v, [Some(0), Some(5), Some(6)]);
+    assert_eq!(v, [Some(0), Some(5), Some(6), Some(-8isize as u64)]);
 }
 
 #[test]
