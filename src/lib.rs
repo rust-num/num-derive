@@ -11,27 +11,26 @@
 #![crate_type = "proc-macro"]
 #![doc(html_root_url = "https://docs.rs/num-derive/0.1")]
 
-extern crate syn;
-#[macro_use]
-extern crate quote;
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
+extern crate proc_macro2;
+#[macro_use]
+extern crate quote;
+extern crate syn;
 
-use syn::Body::Enum;
-use syn::Ident;
-use syn::VariantData::Unit;
+use proc_macro::TokenStream;
+use proc_macro2::Span;
+
+use syn::{Data, Fields, Ident};
 
 #[proc_macro_derive(FromPrimitive)]
 pub fn from_primitive(input: TokenStream) -> TokenStream {
-    let source = input.to_string();
-
-    let ast = syn::parse_macro_input(&source).unwrap();
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
-    let dummy_const = Ident::new(format!("_IMPL_NUM_FROM_PRIMITIVE_FOR_{}", name));
+    let dummy_const = Ident::new(&format!("_IMPL_NUM_FROM_PRIMITIVE_FOR_{}", name), Span::call_site());
 
-    let variants = match ast.body {
-        Enum(ref variants) => variants,
+    let variants = match ast.data {
+        Data::Enum(ref data_enum) => &data_enum.variants,
         _ => panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum", name)
     };
 
@@ -41,15 +40,15 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
     let clauses: Vec<_> = variants.iter()
         .map(|variant| {
             let ident = &variant.ident;
-            match variant.data {
-                Unit => (),
+            match variant.fields {
+                Fields::Unit => (),
                 _ => {
                     panic!("`FromPrimitive` can be applied only to unitary enums, {}::{} is either struct or tuple", name, ident)
                 },
             }
 
             let discriminant_expr = match variant.discriminant {
-                Some(ref const_expr) => {
+                Some((_, ref const_expr)) => {
                     expr = quote! { (#const_expr) as isize };
                     offset = 1;
                     expr.clone()
@@ -95,14 +94,12 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(ToPrimitive)]
 pub fn to_primitive(input: TokenStream) -> TokenStream {
-    let source = input.to_string();
-
-    let ast = syn::parse_macro_input(&source).unwrap();
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
-    let dummy_const = Ident::new(format!("_IMPL_NUM_TO_PRIMITIVE_FOR_{}", name));
+    let dummy_const = Ident::new(&format!("_IMPL_NUM_TO_PRIMITIVE_FOR_{}", name), Span::call_site());
 
-    let variants = match ast.body {
-        Enum(ref variants) => variants,
+    let variants = match ast.data {
+        Data::Enum(ref data_enum) => &data_enum.variants,
         _ => panic!("`ToPrimitive` can be applied only to the enums, {} is not an enum", name)
     };
 
@@ -111,15 +108,15 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
     let variants: Vec<_> = variants.iter()
         .map(|variant| {
             let ident = &variant.ident;
-            match variant.data {
-                Unit => (),
+            match variant.fields {
+                Fields::Unit => (),
                 _ => {
                     panic!("`ToPrimitive` can be applied only to unitary enums, {}::{} is either struct or tuple", name, ident)
                 },
             }
 
             let discriminant_expr = match variant.discriminant {
-                Some(ref const_expr) => {
+                Some((_, ref const_expr)) => {
                     expr = quote! { (#const_expr) as isize };
                     offset = 1;
                     expr.clone()
