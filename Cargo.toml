@@ -14,16 +14,16 @@ readme = "README.md"
 [dependencies]
 proc-macro2 = "0.2.1"
 quote = "0.4.2"
-
-[dependencies.syn]
-version = "0.12.7"
-features = ["full"]
+syn = "0.12.7"
 
 [dev-dependencies]
 compiletest_rs = "0.3.5"
 
 [dev-dependencies.num]
 version = "0.1"
+
+[features]
+full-syntax = ["syn/full"]
 
 [lib]
 name = "num_derive"

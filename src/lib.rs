@@ -89,7 +89,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         };
     };
 
-    res.to_string().parse().unwrap()
+    res.into()
 }
 
 #[proc_macro_derive(ToPrimitive)]
@@ -133,7 +133,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         .collect();
 
     let match_expr = if variants.is_empty() {
-        // No variants found, so do not use Some to not to trigger #[warn(unreachable_code)]
+        // No variants found, so do not use Some to not to trigger `unreachable_code` lint
         quote! {
             match *self {}
         }
@@ -162,5 +162,5 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         };
     };
 
-    res.to_string().parse().unwrap()
+    res.into()
 }
