@@ -22,6 +22,10 @@ compiletest_rs = "0.3.5"
 [dev-dependencies.num]
 version = "0.1"
 
+[dev-dependencies.num-derive]
+path = "."
+features = ["full-syntax"]
+
 [features]
 full-syntax = ["syn/full"]
 
