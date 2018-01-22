@@ -8,16 +8,13 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-extern crate num as num_renamed;
 #[macro_use]
 extern crate num_derive;
 
-#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive)]
-enum Color {}
-
-#[test]
-fn test_empty_enum() {
-    let v: [Option<Color>; 1] = [num_renamed::FromPrimitive::from_u64(0)];
-
-    assert_eq!(v, [None]);
+#[derive(Debug, FromPrimitive, ToPrimitive)]
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
 }

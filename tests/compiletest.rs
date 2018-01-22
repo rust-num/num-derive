@@ -3,8 +3,10 @@ extern crate compiletest_rs as compiletest;
 use std::path::PathBuf;
 use std::env::var;
 
+use compiletest::Config;
+
 fn run_mode(mode: &'static str) {
-    let mut config = compiletest::default_config();
+    let mut config = Config::default();
 
     let cfg_mode = mode.parse().ok().expect("Invalid mode");
 
