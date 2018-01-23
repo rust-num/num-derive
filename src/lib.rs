@@ -34,9 +34,9 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         _ => panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum", name)
     };
 
-    let from_u64_var = quote! { n };
-    let mut expr = quote! { 0isize };
-    let mut offset = 0isize;
+    let from_i64_var = quote! { n };
+    let mut expr = quote! { 0i64 };
+    let mut offset = 0i64;
     let clauses: Vec<_> = variants.iter()
         .map(|variant| {
             let ident = &variant.ident;
@@ -49,7 +49,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 
             let discriminant_expr = match variant.discriminant {
                 Some((_, ref const_expr)) => {
-                    expr = quote! { (#const_expr) as isize };
+                    expr = quote! { (#const_expr) as i64 };
                     offset = 1;
                     expr.clone()
                 }
@@ -61,14 +61,14 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
             };
 
             quote! {
-                if #from_u64_var as isize == #discriminant_expr {
+                if #from_i64_var == #discriminant_expr {
                     Some(#name::#ident)
                 }
             }
         })
         .collect();
 
-    let from_u64_var = if clauses.is_empty() { quote!(_) } else { from_u64_var };
+    let from_i64_var = if clauses.is_empty() { quote!(_) } else { from_i64_var };
 
     let res = quote! {
         #[allow(non_upper_case_globals)]
@@ -76,14 +76,14 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
             extern crate num as _num;
 
             impl _num::traits::FromPrimitive for #name {
-                fn from_i64(n: i64) -> Option<Self> {
-                    Self::from_u64(n as u64)
-                }
-
-                fn from_u64(#from_u64_var: u64) -> Option<Self> {
+                fn from_i64(#from_i64_var: i64) -> Option<Self> {
                     #(#clauses else)* {
                         None
                     }
+                }
+
+                fn from_u64(n: u64) -> Option<Self> {
+                    Self::from_i64(n as i64)
                 }
             }
         };
@@ -103,8 +103,8 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         _ => panic!("`ToPrimitive` can be applied only to the enums, {} is not an enum", name)
     };
 
-    let mut expr = quote! { 0isize };
-    let mut offset = 0isize;
+    let mut expr = quote! { 0i64 };
+    let mut offset = 0i64;
     let variants: Vec<_> = variants.iter()
         .map(|variant| {
             let ident = &variant.ident;
@@ -117,7 +117,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
 
             let discriminant_expr = match variant.discriminant {
                 Some((_, ref const_expr)) => {
-                    expr = quote! { (#const_expr) as isize };
+                    expr = quote! { (#const_expr) as i64 };
                     offset = 1;
                     expr.clone()
                 }
@@ -128,7 +128,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
                 }
             };
 
-            quote!(#name::#ident => (#discriminant_expr) as u64)
+            quote!(#name::#ident => (#discriminant_expr))
         })
         .collect();
 
@@ -152,11 +152,11 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
 
             impl _num::traits::ToPrimitive for #name {
                 fn to_i64(&self) -> Option<i64> {
-                    self.to_u64().map(|x| x as i64)
+                    #match_expr
                 }
 
                 fn to_u64(&self) -> Option<u64> {
-                    #match_expr
+                    self.to_i64().map(|x| x as u64)
                 }
             }
         };
