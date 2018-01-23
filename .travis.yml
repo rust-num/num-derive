@@ -4,9 +4,13 @@ rust:
   - stable
   - beta
   - nightly
+env:
+  matrix:
+    - # no features
+    - FEATURES="full-syntax"
 sudo: false
 script:
-  - cargo build --verbose
+  - cargo build --verbose --features="$FEATURES"
   - ./ci/test_full.sh
 notifications:
   email:
