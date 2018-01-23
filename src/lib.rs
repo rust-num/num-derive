@@ -76,6 +76,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
             extern crate num as _num;
 
             impl _num::traits::FromPrimitive for #name {
+                #[allow(trivial_numeric_casts)]
                 fn from_i64(#from_i64_var: i64) -> Option<Self> {
                     #(#clauses else)* {
                         None
