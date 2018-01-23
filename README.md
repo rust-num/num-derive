@@ -33,6 +33,10 @@ extern crate num_derive;
 [utilizing constants]: https://github.com/rust-num/num-derive/pull/3#issuecomment-359044704
 [compile time doubling]: https://github.com/rust-num/num-derive/pull/3#issuecomment-359172588
 
+## Releases
+
+Release notes are available in [RELEASES.md](RELEASES.md).
+
 ## Compatibility
 
 The `num-derive` crate is tested for rustc 1.15 and greater.
