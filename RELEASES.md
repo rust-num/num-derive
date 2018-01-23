@@ -1,3 +1,10 @@
+# Release 0.1.43
+
+- [The derived code now explicitly allows `trivial_numeric_casts`][7], so users
+  that globally deny that lint don't encounter an error.
+
+[7]: https://github.com/rust-num/num-derive/pull/7
+
 # Release 0.1.42
 
 - [num-derive now has its own source repository][num-356] at [rust-num/num-derive][home].
