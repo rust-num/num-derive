@@ -152,6 +152,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
             extern crate num as _num;
 
             impl _num::traits::ToPrimitive for #name {
+                #[allow(trivial_numeric_casts)]
                 fn to_i64(&self) -> Option<i64> {
                     #match_expr
                 }
