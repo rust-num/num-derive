@@ -1,3 +1,10 @@
+# Release 0.1.44
+
+- [The derived code now explicitly allows `unused_qualifications`][9], so users
+  that globally deny that lint don't encounter an error.
+
+[9]: https://github.com/rust-num/num-derive/pull/9
+
 # Release 0.1.43
 
 - [The derived code now explicitly allows `trivial_numeric_casts`][7], so users
