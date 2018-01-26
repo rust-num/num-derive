@@ -72,6 +72,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 
     let res = quote! {
         #[allow(non_upper_case_globals)]
+        #[allow(unused_qualifications)]
         const #dummy_const: () = {
             extern crate num as _num;
 
