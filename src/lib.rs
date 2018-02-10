@@ -35,8 +35,6 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
     };
 
     let from_i64_var = quote! { n };
-    let mut expr = quote! { 0i64 };
-    let mut offset = 0i64;
     let clauses: Vec<_> = variants.iter()
         .map(|variant| {
             let ident = &variant.ident;
@@ -47,21 +45,8 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
                 },
             }
 
-            let discriminant_expr = match variant.discriminant {
-                Some((_, ref const_expr)) => {
-                    expr = quote! { (#const_expr) as i64 };
-                    offset = 1;
-                    expr.clone()
-                }
-                None => {
-                    let tt = quote! { #expr + #offset };
-                    offset += 1;
-                    tt
-                }
-            };
-
             quote! {
-                if #from_i64_var == #discriminant_expr {
+                if #from_i64_var == #name::#ident as i64 {
                     Some(#name::#ident)
                 }
             }
@@ -105,8 +90,6 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         _ => panic!("`ToPrimitive` can be applied only to the enums, {} is not an enum", name)
     };
 
-    let mut expr = quote! { 0i64 };
-    let mut offset = 0i64;
     let variants: Vec<_> = variants.iter()
         .map(|variant| {
             let ident = &variant.ident;
@@ -117,20 +100,10 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
                 },
             }
 
-            let discriminant_expr = match variant.discriminant {
-                Some((_, ref const_expr)) => {
-                    expr = quote! { (#const_expr) as i64 };
-                    offset = 1;
-                    expr.clone()
-                }
-                None => {
-                    let tt = quote! { #expr + #offset };
-                    offset += 1;
-                    tt
-                }
-            };
-
-            quote!(#name::#ident => (#discriminant_expr))
+            // NB: We have to check each variant individually, because we'll only have `&self`
+            // for the input.  We can't move from that, and it might not be `Clone` or `Copy`.
+            // (Otherwise we could just do `*self as i64` without a `match` at all.)
+            quote!(#name::#ident => #name::#ident as i64)
         })
         .collect();
 
