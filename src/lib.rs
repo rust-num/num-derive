@@ -11,6 +11,33 @@
 #![crate_type = "proc-macro"]
 #![doc(html_root_url = "https://docs.rs/num-derive/0.2")]
 
+//! Procedural macros to derive numeric traits in Rust.
+//!
+//! ## Usage
+//!
+//! Add this to your `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! num-traits = "0.2"
+//! num-derive = "0.2"
+//! ```
+//!
+//! Then you can derive traits on your own types:
+//!
+//! ```rust
+//! #[macro_use]
+//! extern crate num_derive;
+//!
+//! #[derive(FromPrimitive, ToPrimitive)]
+//! enum Color {
+//!     Red,
+//!     Blue,
+//!     Green,
+//! }
+//! # fn main() {}
+//! ```
+
 extern crate proc_macro;
 
 extern crate proc_macro2;
@@ -23,6 +50,9 @@ use proc_macro2::Span;
 
 use syn::{Data, Fields, Ident};
 
+/// Derives [`num_traits::FromPrimitive`][from] for simple enums.
+///
+/// [from]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.FromPrimitive.html
 #[proc_macro_derive(FromPrimitive)]
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
@@ -79,6 +109,9 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
     res.into()
 }
 
+/// Derives [`num_traits::ToPrimitive`][to] for simple enums.
+///
+/// [to]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.ToPrimitive.html
 #[proc_macro_derive(ToPrimitive)]
 pub fn to_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();

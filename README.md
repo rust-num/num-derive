@@ -23,6 +23,17 @@ and this to your crate root:
 extern crate num_derive;
 ```
 
+Then you can derive traits on your own types:
+
+```rust
+#[derive(FromPrimitive, ToPrimitive)]
+enum Color {
+    Red,
+    Blue,
+    Green,
+}
+```
+
 ## Optional features
 
 - **`full-syntax`** — Enables `num-derive` to handle enum discriminants
