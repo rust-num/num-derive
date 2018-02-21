@@ -4,13 +4,6 @@ set -ex
 
 echo Testing num-derive on rustc ${TRAVIS_RUST_VERSION}
 
-# num-derive should build everywhere.
+# num-derive should build and test everywhere.
 cargo build --verbose --features="$FEATURES"
-
-# We have no features to test...
-
-
-if [ "$TRAVIS_RUST_VERSION" != nightly ]; then exit; fi
-
-# num-derive testing requires compiletest_rs, which requires nightly
 cargo test --verbose --features="$FEATURES"

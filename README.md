@@ -12,8 +12,8 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-num = "0.1"
-num-derive = "0.1"
+num-traits = "0.2"
+num-derive = "0.2"
 ```
 
 and this to your crate root:
@@ -21,6 +21,17 @@ and this to your crate root:
 ```rust
 #[macro_use]
 extern crate num_derive;
+```
+
+Then you can derive traits on your own types:
+
+```rust
+#[derive(FromPrimitive, ToPrimitive)]
+enum Color {
+    Red,
+    Blue,
+    Green,
+}
 ```
 
 ## Optional features

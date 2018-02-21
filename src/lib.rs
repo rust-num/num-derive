@@ -9,7 +9,34 @@
 // except according to those terms.
 
 #![crate_type = "proc-macro"]
-#![doc(html_root_url = "https://docs.rs/num-derive/0.1")]
+#![doc(html_root_url = "https://docs.rs/num-derive/0.2")]
+
+//! Procedural macros to derive numeric traits in Rust.
+//!
+//! ## Usage
+//!
+//! Add this to your `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! num-traits = "0.2"
+//! num-derive = "0.2"
+//! ```
+//!
+//! Then you can derive traits on your own types:
+//!
+//! ```rust
+//! #[macro_use]
+//! extern crate num_derive;
+//!
+//! #[derive(FromPrimitive, ToPrimitive)]
+//! enum Color {
+//!     Red,
+//!     Blue,
+//!     Green,
+//! }
+//! # fn main() {}
+//! ```
 
 extern crate proc_macro;
 
@@ -23,6 +50,54 @@ use proc_macro2::Span;
 
 use syn::{Data, Fields, Ident};
 
+/// Derives [`num_traits::FromPrimitive`][from] for simple enums.
+///
+/// [from]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.FromPrimitive.html
+///
+/// # Examples
+///
+/// Simple enums can be derived:
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate num_derive;
+///
+/// #[derive(FromPrimitive)]
+/// enum Color {
+///     Red,
+///     Blue,
+///     Green = 42,
+/// }
+/// # fn main() {}
+/// ```
+///
+/// Enums that contain data are not allowed:
+///
+/// ```compile_fail
+/// # #[macro_use]
+/// # extern crate num_derive;
+///
+/// #[derive(FromPrimitive)]
+/// enum Color {
+///     Rgb(u8, u8, u8),
+///     Hsv(u8, u8, u8),
+/// }
+/// # fn main() {}
+/// ```
+///
+/// Structs are not allowed:
+///
+/// ```compile_fail
+/// # #[macro_use]
+/// # extern crate num_derive;
+/// #[derive(FromPrimitive)]
+/// struct Color {
+///     r: u8,
+///     g: u8,
+///     b: u8,
+/// }
+/// # fn main() {}
+/// ```
 #[proc_macro_derive(FromPrimitive)]
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
@@ -59,9 +134,9 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         #[allow(non_upper_case_globals)]
         #[allow(unused_qualifications)]
         const #dummy_const: () = {
-            extern crate num as _num;
+            extern crate num_traits as _num_traits;
 
-            impl _num::traits::FromPrimitive for #name {
+            impl _num_traits::FromPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 fn from_i64(#from_i64_var: i64) -> Option<Self> {
                     #(#clauses else)* {
@@ -79,6 +154,54 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
     res.into()
 }
 
+/// Derives [`num_traits::ToPrimitive`][to] for simple enums.
+///
+/// [to]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.ToPrimitive.html
+///
+/// # Examples
+///
+/// Simple enums can be derived:
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate num_derive;
+///
+/// #[derive(ToPrimitive)]
+/// enum Color {
+///     Red,
+///     Blue,
+///     Green = 42,
+/// }
+/// # fn main() {}
+/// ```
+///
+/// Enums that contain data are not allowed:
+///
+/// ```compile_fail
+/// # #[macro_use]
+/// # extern crate num_derive;
+///
+/// #[derive(ToPrimitive)]
+/// enum Color {
+///     Rgb(u8, u8, u8),
+///     Hsv(u8, u8, u8),
+/// }
+/// # fn main() {}
+/// ```
+///
+/// Structs are not allowed:
+///
+/// ```compile_fail
+/// # #[macro_use]
+/// # extern crate num_derive;
+/// #[derive(ToPrimitive)]
+/// struct Color {
+///     r: u8,
+///     g: u8,
+///     b: u8,
+/// }
+/// # fn main() {}
+/// ```
 #[proc_macro_derive(ToPrimitive)]
 pub fn to_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
@@ -124,9 +247,9 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         #[allow(non_upper_case_globals)]
         #[allow(unused_qualifications)]
         const #dummy_const: () = {
-            extern crate num as _num;
+            extern crate num_traits as _num_traits;
 
-            impl _num::traits::ToPrimitive for #name {
+            impl _num_traits::ToPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 fn to_i64(&self) -> Option<i64> {
                     #match_expr
