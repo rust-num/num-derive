@@ -53,6 +53,51 @@ use syn::{Data, Fields, Ident};
 /// Derives [`num_traits::FromPrimitive`][from] for simple enums.
 ///
 /// [from]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.FromPrimitive.html
+///
+/// # Examples
+///
+/// Simple enums can be derived:
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate num_derive;
+///
+/// #[derive(FromPrimitive)]
+/// enum Color {
+///     Red,
+///     Blue,
+///     Green = 42,
+/// }
+/// # fn main() {}
+/// ```
+///
+/// Enums that contain data are not allowed:
+///
+/// ```compile_fail
+/// # #[macro_use]
+/// # extern crate num_derive;
+///
+/// #[derive(FromPrimitive)]
+/// enum Color {
+///     Rgb(u8, u8, u8),
+///     Hsv(u8, u8, u8),
+/// }
+/// # fn main() {}
+/// ```
+///
+/// Structs are not allowed:
+///
+/// ```compile_fail
+/// # #[macro_use]
+/// # extern crate num_derive;
+/// #[derive(FromPrimitive)]
+/// struct Color {
+///     r: u8,
+///     g: u8,
+///     b: u8,
+/// }
+/// # fn main() {}
+/// ```
 #[proc_macro_derive(FromPrimitive)]
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
@@ -112,6 +157,51 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 /// Derives [`num_traits::ToPrimitive`][to] for simple enums.
 ///
 /// [to]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.ToPrimitive.html
+///
+/// # Examples
+///
+/// Simple enums can be derived:
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate num_derive;
+///
+/// #[derive(ToPrimitive)]
+/// enum Color {
+///     Red,
+///     Blue,
+///     Green = 42,
+/// }
+/// # fn main() {}
+/// ```
+///
+/// Enums that contain data are not allowed:
+///
+/// ```compile_fail
+/// # #[macro_use]
+/// # extern crate num_derive;
+///
+/// #[derive(ToPrimitive)]
+/// enum Color {
+///     Rgb(u8, u8, u8),
+///     Hsv(u8, u8, u8),
+/// }
+/// # fn main() {}
+/// ```
+///
+/// Structs are not allowed:
+///
+/// ```compile_fail
+/// # #[macro_use]
+/// # extern crate num_derive;
+/// #[derive(ToPrimitive)]
+/// struct Color {
+///     r: u8,
+///     g: u8,
+///     b: u8,
+/// }
+/// # fn main() {}
+/// ```
 #[proc_macro_derive(ToPrimitive)]
 pub fn to_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
