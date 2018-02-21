@@ -12,8 +12,8 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-num = "0.1"
-num-derive = "0.1"
+num-traits = "0.2"
+num-derive = "0.2"
 ```
 
 and this to your crate root:

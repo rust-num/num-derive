@@ -9,7 +9,7 @@
 // except according to those terms.
 
 #![crate_type = "proc-macro"]
-#![doc(html_root_url = "https://docs.rs/num-derive/0.1")]
+#![doc(html_root_url = "https://docs.rs/num-derive/0.2")]
 
 extern crate proc_macro;
 
@@ -59,9 +59,9 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         #[allow(non_upper_case_globals)]
         #[allow(unused_qualifications)]
         const #dummy_const: () = {
-            extern crate num as _num;
+            extern crate num_traits as _num_traits;
 
-            impl _num::traits::FromPrimitive for #name {
+            impl _num_traits::FromPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 fn from_i64(#from_i64_var: i64) -> Option<Self> {
                     #(#clauses else)* {
@@ -124,9 +124,9 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         #[allow(non_upper_case_globals)]
         #[allow(unused_qualifications)]
         const #dummy_const: () = {
-            extern crate num as _num;
+            extern crate num_traits as _num_traits;
 
-            impl _num::traits::ToPrimitive for #name {
+            impl _num_traits::ToPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 fn to_i64(&self) -> Option<i64> {
                     #match_expr
