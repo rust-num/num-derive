@@ -1,3 +1,9 @@
+# Release 0.2.1
+
+- [Updated dependencies][12] -- thanks @spearman!
+
+[12]: https://github.com/rust-num/num-derive/pull/12
+
 # Release 0.2.0
 
 - [Discriminant matching is now simplified][10], casting values directly by
