@@ -1,3 +1,9 @@
+# Release 0.2.2
+
+- [Updated dependencies][14].
+
+[14]: https://github.com/rust-num/num-derive/pull/14
+
 # Release 0.2.1
 
 - [Updated dependencies][12] -- thanks @spearman!
