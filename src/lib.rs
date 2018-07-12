@@ -102,22 +102,31 @@ use syn::{Data, Fields, Ident};
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
-    let dummy_const = Ident::new(&format!("_IMPL_NUM_FROM_PRIMITIVE_FOR_{}", name), Span::call_site());
+    let dummy_const = Ident::new(
+        &format!("_IMPL_NUM_FROM_PRIMITIVE_FOR_{}", name),
+        Span::call_site(),
+    );
 
     let variants = match ast.data {
         Data::Enum(ref data_enum) => &data_enum.variants,
-        _ => panic!("`FromPrimitive` can be applied only to the enums, {} is not an enum", name)
+        _ => panic!(
+            "`FromPrimitive` can be applied only to the enums, {} is not an enum",
+            name
+        ),
     };
 
     let from_i64_var = quote! { n };
-    let clauses: Vec<_> = variants.iter()
+    let clauses: Vec<_> = variants
+        .iter()
         .map(|variant| {
             let ident = &variant.ident;
             match variant.fields {
                 Fields::Unit => (),
-                _ => {
-                    panic!("`FromPrimitive` can be applied only to unitary enums, {}::{} is either struct or tuple", name, ident)
-                },
+                _ => panic!(
+                    "`FromPrimitive` can be applied only to unitary enums, \
+                     {}::{} is either struct or tuple",
+                    name, ident
+                ),
             }
 
             quote! {
@@ -128,7 +137,11 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         })
         .collect();
 
-    let from_i64_var = if clauses.is_empty() { quote!(_) } else { from_i64_var };
+    let from_i64_var = if clauses.is_empty() {
+        quote!(_)
+    } else {
+        from_i64_var
+    };
 
     let res = quote! {
         #[allow(non_upper_case_globals)]
@@ -206,14 +219,21 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 pub fn to_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
-    let dummy_const = Ident::new(&format!("_IMPL_NUM_TO_PRIMITIVE_FOR_{}", name), Span::call_site());
+    let dummy_const = Ident::new(
+        &format!("_IMPL_NUM_TO_PRIMITIVE_FOR_{}", name),
+        Span::call_site(),
+    );
 
     let variants = match ast.data {
         Data::Enum(ref data_enum) => &data_enum.variants,
-        _ => panic!("`ToPrimitive` can be applied only to the enums, {} is not an enum", name)
+        _ => panic!(
+            "`ToPrimitive` can be applied only to the enums, {} is not an enum",
+            name
+        ),
     };
 
-    let variants: Vec<_> = variants.iter()
+    let variants: Vec<_> = variants
+        .iter()
         .map(|variant| {
             let ident = &variant.ident;
             match variant.fields {

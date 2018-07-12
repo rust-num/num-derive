@@ -18,7 +18,7 @@ quote = "0.6"
 syn = "0.14"
 
 [dev-dependencies]
-num = "0.1"
+num = "0.2"
 
 [features]
 full-syntax = ["syn/full"]
