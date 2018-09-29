@@ -2,7 +2,7 @@ extern crate num as num_renamed;
 #[macro_use]
 extern crate num_derive;
 
-use num_renamed::{FromPrimitive, ToPrimitive, NumCast, One, Zero};
+use num_renamed::{FromPrimitive, ToPrimitive, NumCast, One, Zero, Num};
 
 #[derive(
     Debug,
@@ -16,6 +16,7 @@ use num_renamed::{FromPrimitive, ToPrimitive, NumCast, One, Zero};
     NumCast,
     One,
     Zero,
+    Num,
 )]
 struct MyFloat(f64);
 
@@ -51,4 +52,9 @@ fn test_zero() {
 #[test]
 fn test_one() {
     assert_eq!(MyFloat::one(), MyFloat(1.0));
+}
+
+#[test]
+fn test_num() {
+    assert_eq!(MyFloat::from_str_radix("25", 10).ok(), Some(MyFloat(25.0)));
 }

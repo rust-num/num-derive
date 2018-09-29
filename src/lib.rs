@@ -557,3 +557,22 @@ pub fn one(input: TokenStream) -> TokenStream {
         }
     }).into()
 }
+
+/// Derives [`num_traits::Num`][num] for newtypes.  The inner type must already implement `Num`.
+///
+/// [num]: https://docs.rs/num-traits/0.2/num_traits/trait.Num.html
+#[proc_macro_derive(Num)]
+pub fn num(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let name = &ast.ident;
+    let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+    dummy_const_trick("Num", &name, quote! {
+        extern crate num_traits as _num_traits;
+        impl _num_traits::Num for #name {
+            type FromStrRadixErr = <#inner_ty as _num_traits::Num>::FromStrRadixErr;
+            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
+                <#inner_ty as _num_traits::Num>::from_str_radix(s, radix).map(#name)
+            }
+        }
+    }).into()
+}
