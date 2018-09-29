@@ -515,3 +515,45 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
         }
     }).into()
 }
+
+/// Derives [`num_traits::Zero`][zero] for newtypes.  The inner type must already implement `Zero`.
+///
+/// [zero]: https://docs.rs/num-traits/0.2/num_traits/identities/trait.Zero.html
+#[proc_macro_derive(Zero)]
+pub fn zero(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let name = &ast.ident;
+    let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+    dummy_const_trick("Zero", &name, quote! {
+        extern crate num_traits as _num_traits;
+        impl _num_traits::Zero for #name {
+            fn zero() -> Self {
+                #name(<#inner_ty as _num_traits::Zero>::zero())
+            }
+            fn is_zero(&self) -> bool {
+                <#inner_ty as _num_traits::Zero>::is_zero(&self.0)
+            }
+        }
+    }).into()
+}
+
+/// Derives [`num_traits::One`][one] for newtypes.  The inner type must already implement `One`.
+///
+/// [one]: https://docs.rs/num-traits/0.2/num_traits/identities/trait.One.html
+#[proc_macro_derive(One)]
+pub fn one(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let name = &ast.ident;
+    let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+    dummy_const_trick("One", &name, quote! {
+        extern crate num_traits as _num_traits;
+        impl _num_traits::One for #name {
+            fn one() -> Self {
+                #name(<#inner_ty as _num_traits::One>::one())
+            }
+            fn is_one(&self) -> bool {
+                <#inner_ty as _num_traits::One>::is_one(&self.0)
+            }
+        }
+    }).into()
+}
