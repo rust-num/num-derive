@@ -50,6 +50,43 @@ use proc_macro2::Span;
 
 use syn::{Data, Fields, Ident};
 
+// Within `exp`, you can bring things into scope with `extern crate`.
+//
+// We don't want to assume that `num_traits::` is in scope - the user may have imported it under a
+// different name, or may have imported it in a non-toplevel module (common when putting impls
+// behind a feature gate).
+//
+// Solution: let's just generate `extern crate num_traits as _num_traits` and then refer to
+// `_num_traits` in the derived code.  However, macros are not allowed to produce `extern crate`
+// statements at the toplevel.
+//
+// Solution: let's generate `mod _impl_foo` and import num_traits within that.  However, now we
+// lose access to private members of the surrounding module.  This is a problem if, for example,
+// we're deriving for a newtype, where the inner type is defined in the same module, but not
+// exported.
+//
+// Solution: use the dummy const trick.  For some reason, `extern crate` statements are allowed
+// here, but everything from the surrounding module is in scope.  This trick is taken from serde.
+fn dummy_const_trick<T: quote::ToTokens>(
+    trait_: &str,
+    name: &proc_macro2::Ident,
+    exp: T,
+) -> proc_macro2::TokenStream {
+    let dummy_const = Ident::new(
+        &format!(
+            "_IMPL_NUM_{}_FOR_{}",
+            trait_.to_uppercase(),
+            format!("{}", name).to_uppercase()
+        ),
+        Span::call_site(),
+    );
+    quote! {
+        const #dummy_const: () = {
+            #exp
+        };
+    }
+}
+
 /// Derives [`num_traits::FromPrimitive`][from] for simple enums.
 ///
 /// [from]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.FromPrimitive.html
@@ -102,10 +139,6 @@ use syn::{Data, Fields, Ident};
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
-    let dummy_const = Ident::new(
-        &format!("_IMPL_NUM_FROM_PRIMITIVE_FOR_{}", name),
-        Span::call_site(),
-    );
 
     let variants = match ast.data {
         Data::Enum(ref data_enum) => &data_enum.variants,
@@ -143,28 +176,23 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         from_i64_var
     };
 
-    let res = quote! {
-        #[allow(non_upper_case_globals)]
+    dummy_const_trick("FromPrimative", &name, quote! {
         #[allow(unused_qualifications)]
-        const #dummy_const: () = {
-            extern crate num_traits as _num_traits;
+        extern crate num_traits as _num_traits;
 
-            impl _num_traits::FromPrimitive for #name {
-                #[allow(trivial_numeric_casts)]
-                fn from_i64(#from_i64_var: i64) -> Option<Self> {
-                    #(#clauses else)* {
-                        None
-                    }
-                }
-
-                fn from_u64(n: u64) -> Option<Self> {
-                    Self::from_i64(n as i64)
+        impl _num_traits::FromPrimitive for #name {
+            #[allow(trivial_numeric_casts)]
+            fn from_i64(#from_i64_var: i64) -> Option<Self> {
+                #(#clauses else)* {
+                    None
                 }
             }
-        };
-    };
 
-    res.into()
+            fn from_u64(n: u64) -> Option<Self> {
+                Self::from_i64(n as i64)
+            }
+        }
+    }).into()
 }
 
 /// Derives [`num_traits::ToPrimitive`][to] for simple enums.
@@ -219,10 +247,6 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 pub fn to_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
-    let dummy_const = Ident::new(
-        &format!("_IMPL_NUM_TO_PRIMITIVE_FOR_{}", name),
-        Span::call_site(),
-    );
 
     let variants = match ast.data {
         Data::Enum(ref data_enum) => &data_enum.variants,
@@ -263,24 +287,19 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         }
     };
 
-    let res = quote! {
-        #[allow(non_upper_case_globals)]
+    dummy_const_trick("ToPrimative", &name, quote! {
         #[allow(unused_qualifications)]
-        const #dummy_const: () = {
-            extern crate num_traits as _num_traits;
+        extern crate num_traits as _num_traits;
 
-            impl _num_traits::ToPrimitive for #name {
-                #[allow(trivial_numeric_casts)]
-                fn to_i64(&self) -> Option<i64> {
-                    #match_expr
-                }
-
-                fn to_u64(&self) -> Option<u64> {
-                    self.to_i64().map(|x| x as u64)
-                }
+        impl _num_traits::ToPrimitive for #name {
+            #[allow(trivial_numeric_casts)]
+            fn to_i64(&self) -> Option<i64> {
+                #match_expr
             }
-        };
-    };
 
-    res.into()
+            fn to_u64(&self) -> Option<u64> {
+                self.to_i64().map(|x| x as u64)
+            }
+        }
+    }).into()
 }
