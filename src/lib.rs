@@ -447,3 +447,52 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
 
     dummy_const_trick("ToPrimitive", &name, impl_).into()
 }
+
+const NEWTYPE_ONLY: &'static str = "This trait can only be derived for newtypes";
+
+/// Derives [`num_traits::NumOps`][num_ops] for newtypes.  The inner type must already implement
+/// `NumOps`.
+///
+/// [num_ops]: https://docs.rs/num-traits/0.2/num_traits/trait.NumOps.html
+///
+/// Note that, since `NumOps` is really a trait alias for `Add + Sub + Mul + Div + Rem`, this macro
+/// generates impls for _those_ traits.  Furthermore, in all generated impls, `RHS=Self` and
+/// `Output=Self`.
+#[proc_macro_derive(NumOps)]
+pub fn num_ops(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let name = &ast.ident;
+    let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+    dummy_const_trick("NumOps", &name, quote! {
+        impl ::std::ops::Add for #name {
+            type Output = Self;
+            fn add(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Add>::add(self.0, other.0))
+            }
+        }
+        impl ::std::ops::Sub for #name {
+            type Output = Self;
+            fn sub(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Sub>::sub(self.0, other.0))
+            }
+        }
+        impl ::std::ops::Mul for #name {
+            type Output = Self;
+            fn mul(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Mul>::mul(self.0, other.0))
+            }
+        }
+        impl ::std::ops::Div for #name {
+            type Output = Self;
+            fn div(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Div>::div(self.0, other.0))
+            }
+        }
+        impl ::std::ops::Rem for #name {
+            type Output = Self;
+            fn rem(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Rem>::rem(self.0, other.0))
+            }
+        }
+    }).into()
+}

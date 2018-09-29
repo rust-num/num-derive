@@ -12,6 +12,7 @@ use num_renamed::{FromPrimitive, ToPrimitive};
     PartialOrd,
     ToPrimitive,
     FromPrimitive,
+    NumOps,
 )]
 struct MyFloat(f64);
 
@@ -23,4 +24,13 @@ fn test_from_primitive() {
 #[test]
 fn test_to_primitive() {
     assert_eq!(MyFloat(25.0).to_u32(), Some(25));
+}
+
+#[test]
+fn test_num_ops() {
+    assert_eq!(MyFloat(25.0) + MyFloat(10.0), MyFloat(35.0));
+    assert_eq!(MyFloat(25.0) - MyFloat(10.0), MyFloat(15.0));
+    assert_eq!(MyFloat(25.0) * MyFloat(2.0), MyFloat(50.0));
+    assert_eq!(MyFloat(25.0) / MyFloat(10.0), MyFloat(2.5));
+    assert_eq!(MyFloat(25.0) % MyFloat(10.0), MyFloat(5.0));
 }
