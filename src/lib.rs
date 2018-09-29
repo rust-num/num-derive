@@ -496,3 +496,22 @@ pub fn num_ops(input: TokenStream) -> TokenStream {
         }
     }).into()
 }
+
+/// Derives [`num_traits::NumCast`][num_cast] for newtypes.  The inner type must already implement
+/// `NumCast`.
+///
+/// [num_cast]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.NumCast.html
+#[proc_macro_derive(NumCast)]
+pub fn num_cast(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let name = &ast.ident;
+    let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+    dummy_const_trick("NumCast", &name, quote! {
+        extern crate num_traits as _num_traits;
+        impl _num_traits::NumCast for #name {
+            fn from<T: _num_traits::ToPrimitive>(n: T) -> Option<Self> {
+                <#inner_ty as _num_traits::NumCast>::from(n).map(#name)
+            }
+        }
+    }).into()
+}

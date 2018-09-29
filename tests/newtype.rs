@@ -2,7 +2,7 @@ extern crate num as num_renamed;
 #[macro_use]
 extern crate num_derive;
 
-use num_renamed::{FromPrimitive, ToPrimitive};
+use num_renamed::{FromPrimitive, ToPrimitive, NumCast};
 
 #[derive(
     Debug,
@@ -13,6 +13,7 @@ use num_renamed::{FromPrimitive, ToPrimitive};
     ToPrimitive,
     FromPrimitive,
     NumOps,
+    NumCast,
 )]
 struct MyFloat(f64);
 
@@ -33,4 +34,9 @@ fn test_num_ops() {
     assert_eq!(MyFloat(25.0) * MyFloat(2.0), MyFloat(50.0));
     assert_eq!(MyFloat(25.0) / MyFloat(10.0), MyFloat(2.5));
     assert_eq!(MyFloat(25.0) % MyFloat(10.0), MyFloat(5.0));
+}
+
+#[test]
+fn test_num_cast() {
+    assert_eq!(<MyFloat as NumCast>::from(25u8), Some(MyFloat(25.0)));
 }
