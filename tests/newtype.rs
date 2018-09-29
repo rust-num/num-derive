@@ -2,7 +2,8 @@ extern crate num as num_renamed;
 #[macro_use]
 extern crate num_derive;
 
-use num_renamed::{FromPrimitive, ToPrimitive, NumCast, One, Zero, Num};
+use num_renamed::{FromPrimitive, ToPrimitive, NumCast, One, Zero, Num, Float};
+use std::ops::Neg;
 
 #[derive(
     Debug,
@@ -17,8 +18,16 @@ use num_renamed::{FromPrimitive, ToPrimitive, NumCast, One, Zero, Num};
     One,
     Zero,
     Num,
+    Float,
 )]
 struct MyFloat(f64);
+
+impl Neg for MyFloat {
+    type Output = MyFloat;
+    fn neg(self) -> Self {
+        MyFloat(self.0.neg())
+    }
+}
 
 #[test]
 fn test_from_primitive() {
@@ -57,4 +66,9 @@ fn test_one() {
 #[test]
 fn test_num() {
     assert_eq!(MyFloat::from_str_radix("25", 10).ok(), Some(MyFloat(25.0)));
+}
+
+#[test]
+fn test_float() {
+    assert_eq!(MyFloat(4.0).log(MyFloat(2.0)), MyFloat(2.0));
 }
