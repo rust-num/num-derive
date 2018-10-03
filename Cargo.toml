@@ -10,6 +10,7 @@ name = "num-derive"
 repository = "https://github.com/rust-num/num-derive"
 version = "0.2.2"
 readme = "README.md"
+build = "build.rs"
 
 [dependencies]
 num-traits = "0.2"
