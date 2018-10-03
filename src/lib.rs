@@ -10,7 +10,7 @@
 
 #![crate_type = "proc-macro"]
 #![doc(html_root_url = "https://docs.rs/num-derive/0.2")]
-#![recursion_limit="512"]
+#![recursion_limit = "512"]
 
 //! Procedural macros to derive numeric traits in Rust.
 //!
@@ -91,23 +91,25 @@ fn dummy_const_trick<T: quote::ToTokens>(
 // If `data` is a newtype, return the type it's wrapping.
 fn newtype_inner(data: &syn::Data) -> Option<syn::Type> {
     match data {
-        &Data::Struct(ref s) => match s.fields {
-            Fields::Unnamed(ref fs) => {
-                if fs.unnamed.len() == 1 {
-                    Some(fs.unnamed[0].ty.clone())
-                } else {
+        &Data::Struct(ref s) => {
+            match s.fields {
+                Fields::Unnamed(ref fs) => {
+                    if fs.unnamed.len() == 1 {
+                        Some(fs.unnamed[0].ty.clone())
+                    } else {
+                        None
+                    }
+                }
+                Fields::Named(ref fs) => {
+                    if fs.named.len() == 1 {
+                        panic!("num-derive doesn't know how to handle newtypes with named fields yet. \
+                           Please use a tuple-style newtype, or submit a PR!");
+                    }
                     None
                 }
+                _ => None,
             }
-            Fields::Named(ref fs) => {
-                if fs.named.len() == 1 {
-                    panic!("num-derive doesn't know how to handle newtypes with named fields yet. \
-                           Please use a tuple-style newtype, or submit a PR!");
-                }
-                None
-            }
-            _ => None,
-        },
+        }
         _ => None,
     }
 }
@@ -176,7 +178,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
                 }
             }
         } else {
-            quote! {}
+            quote!{}
         };
 
         quote! {
@@ -343,7 +345,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
                 }
             }
         } else {
-            quote! {}
+            quote!{}
         };
 
         quote! {
@@ -463,38 +465,42 @@ pub fn num_ops(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick("NumOps", &name, quote! {
-        impl ::std::ops::Add for #name {
-            type Output = Self;
-            fn add(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Add>::add(self.0, other.0))
+    dummy_const_trick(
+        "NumOps",
+        &name,
+        quote! {
+            impl ::std::ops::Add for #name {
+                type Output = Self;
+                fn add(self, other: Self) -> Self {
+                    #name(<#inner_ty as ::std::ops::Add>::add(self.0, other.0))
+                }
             }
-        }
-        impl ::std::ops::Sub for #name {
-            type Output = Self;
-            fn sub(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Sub>::sub(self.0, other.0))
+            impl ::std::ops::Sub for #name {
+                type Output = Self;
+                fn sub(self, other: Self) -> Self {
+                    #name(<#inner_ty as ::std::ops::Sub>::sub(self.0, other.0))
+                }
             }
-        }
-        impl ::std::ops::Mul for #name {
-            type Output = Self;
-            fn mul(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Mul>::mul(self.0, other.0))
+            impl ::std::ops::Mul for #name {
+                type Output = Self;
+                fn mul(self, other: Self) -> Self {
+                    #name(<#inner_ty as ::std::ops::Mul>::mul(self.0, other.0))
+                }
             }
-        }
-        impl ::std::ops::Div for #name {
-            type Output = Self;
-            fn div(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Div>::div(self.0, other.0))
+            impl ::std::ops::Div for #name {
+                type Output = Self;
+                fn div(self, other: Self) -> Self {
+                    #name(<#inner_ty as ::std::ops::Div>::div(self.0, other.0))
+                }
             }
-        }
-        impl ::std::ops::Rem for #name {
-            type Output = Self;
-            fn rem(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Rem>::rem(self.0, other.0))
+            impl ::std::ops::Rem for #name {
+                type Output = Self;
+                fn rem(self, other: Self) -> Self {
+                    #name(<#inner_ty as ::std::ops::Rem>::rem(self.0, other.0))
+                }
             }
-        }
-    }).into()
+        },
+    ).into()
 }
 
 /// Derives [`num_traits::NumCast`][num_cast] for newtypes.  The inner type must already implement
@@ -506,14 +512,18 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick("NumCast", &name, quote! {
-        extern crate num_traits as _num_traits;
-        impl _num_traits::NumCast for #name {
-            fn from<T: _num_traits::ToPrimitive>(n: T) -> Option<Self> {
-                <#inner_ty as _num_traits::NumCast>::from(n).map(#name)
+    dummy_const_trick(
+        "NumCast",
+        &name,
+        quote! {
+            extern crate num_traits as _num_traits;
+            impl _num_traits::NumCast for #name {
+                fn from<T: _num_traits::ToPrimitive>(n: T) -> Option<Self> {
+                    <#inner_ty as _num_traits::NumCast>::from(n).map(#name)
+                }
             }
-        }
-    }).into()
+        },
+    ).into()
 }
 
 /// Derives [`num_traits::Zero`][zero] for newtypes.  The inner type must already implement `Zero`.
@@ -524,17 +534,21 @@ pub fn zero(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick("Zero", &name, quote! {
-        extern crate num_traits as _num_traits;
-        impl _num_traits::Zero for #name {
-            fn zero() -> Self {
-                #name(<#inner_ty as _num_traits::Zero>::zero())
+    dummy_const_trick(
+        "Zero",
+        &name,
+        quote! {
+            extern crate num_traits as _num_traits;
+            impl _num_traits::Zero for #name {
+                fn zero() -> Self {
+                    #name(<#inner_ty as _num_traits::Zero>::zero())
+                }
+                fn is_zero(&self) -> bool {
+                    <#inner_ty as _num_traits::Zero>::is_zero(&self.0)
+                }
             }
-            fn is_zero(&self) -> bool {
-                <#inner_ty as _num_traits::Zero>::is_zero(&self.0)
-            }
-        }
-    }).into()
+        },
+    ).into()
 }
 
 /// Derives [`num_traits::One`][one] for newtypes.  The inner type must already implement `One`.
@@ -545,17 +559,21 @@ pub fn one(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick("One", &name, quote! {
-        extern crate num_traits as _num_traits;
-        impl _num_traits::One for #name {
-            fn one() -> Self {
-                #name(<#inner_ty as _num_traits::One>::one())
+    dummy_const_trick(
+        "One",
+        &name,
+        quote! {
+            extern crate num_traits as _num_traits;
+            impl _num_traits::One for #name {
+                fn one() -> Self {
+                    #name(<#inner_ty as _num_traits::One>::one())
+                }
+                fn is_one(&self) -> bool {
+                    <#inner_ty as _num_traits::One>::is_one(&self.0)
+                }
             }
-            fn is_one(&self) -> bool {
-                <#inner_ty as _num_traits::One>::is_one(&self.0)
-            }
-        }
-    }).into()
+        },
+    ).into()
 }
 
 /// Derives [`num_traits::Num`][num] for newtypes.  The inner type must already implement `Num`.
@@ -566,15 +584,19 @@ pub fn num(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick("Num", &name, quote! {
-        extern crate num_traits as _num_traits;
-        impl _num_traits::Num for #name {
-            type FromStrRadixErr = <#inner_ty as _num_traits::Num>::FromStrRadixErr;
-            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
-                <#inner_ty as _num_traits::Num>::from_str_radix(s, radix).map(#name)
+    dummy_const_trick(
+        "Num",
+        &name,
+        quote! {
+            extern crate num_traits as _num_traits;
+            impl _num_traits::Num for #name {
+                type FromStrRadixErr = <#inner_ty as _num_traits::Num>::FromStrRadixErr;
+                fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
+                    <#inner_ty as _num_traits::Num>::from_str_radix(s, radix).map(#name)
+                }
             }
-        }
-    }).into()
+        },
+    ).into()
 }
 
 /// Derives [`num_traits::Float`][float] for newtypes.  The inner type must already implement
@@ -586,181 +608,185 @@ pub fn float(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick("Float", &name, quote! {
-        extern crate num_traits as _num_traits;
-        impl _num_traits::Float for #name {
-            fn nan() -> Self {
-                #name(<#inner_ty as _num_traits::Float>::nan())
+    dummy_const_trick(
+        "Float",
+        &name,
+        quote! {
+            extern crate num_traits as _num_traits;
+            impl _num_traits::Float for #name {
+                fn nan() -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::nan())
+                }
+                fn infinity() -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::infinity())
+                }
+                fn neg_infinity() -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::neg_infinity())
+                }
+                fn neg_zero() -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::neg_zero())
+                }
+                fn min_value() -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::min_value())
+                }
+                fn min_positive_value() -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::min_positive_value())
+                }
+                fn max_value() -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::max_value())
+                }
+                fn is_nan(self) -> bool {
+                    <#inner_ty as _num_traits::Float>::is_nan(self.0)
+                }
+                fn is_infinite(self) -> bool {
+                    <#inner_ty as _num_traits::Float>::is_infinite(self.0)
+                }
+                fn is_finite(self) -> bool {
+                    <#inner_ty as _num_traits::Float>::is_finite(self.0)
+                }
+                fn is_normal(self) -> bool {
+                    <#inner_ty as _num_traits::Float>::is_normal(self.0)
+                }
+                fn classify(self) -> ::std::num::FpCategory {
+                    <#inner_ty as _num_traits::Float>::classify(self.0)
+                }
+                fn floor(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::floor(self.0))
+                }
+                fn ceil(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::ceil(self.0))
+                }
+                fn round(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::round(self.0))
+                }
+                fn trunc(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::trunc(self.0))
+                }
+                fn fract(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::fract(self.0))
+                }
+                fn abs(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::abs(self.0))
+                }
+                fn signum(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::signum(self.0))
+                }
+                fn is_sign_positive(self) -> bool {
+                    <#inner_ty as _num_traits::Float>::is_sign_positive(self.0)
+                }
+                fn is_sign_negative(self) -> bool {
+                    <#inner_ty as _num_traits::Float>::is_sign_negative(self.0)
+                }
+                fn mul_add(self, a: Self, b: Self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::mul_add(self.0, a.0, b.0))
+                }
+                fn recip(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::recip(self.0))
+                }
+                fn powi(self, n: i32) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::powi(self.0, n))
+                }
+                fn powf(self, n: Self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::powf(self.0, n.0))
+                }
+                fn sqrt(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::sqrt(self.0))
+                }
+                fn exp(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::exp(self.0))
+                }
+                fn exp2(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::exp2(self.0))
+                }
+                fn ln(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::ln(self.0))
+                }
+                fn log(self, base: Self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::log(self.0, base.0))
+                }
+                fn log2(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::log2(self.0))
+                }
+                fn log10(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::log10(self.0))
+                }
+                fn max(self, other: Self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::max(self.0, other.0))
+                }
+                fn min(self, other: Self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::min(self.0, other.0))
+                }
+                fn abs_sub(self, other: Self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::abs_sub(self.0, other.0))
+                }
+                fn cbrt(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::cbrt(self.0))
+                }
+                fn hypot(self, other: Self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::hypot(self.0, other.0))
+                }
+                fn sin(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::sin(self.0))
+                }
+                fn cos(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::cos(self.0))
+                }
+                fn tan(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::tan(self.0))
+                }
+                fn asin(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::asin(self.0))
+                }
+                fn acos(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::acos(self.0))
+                }
+                fn atan(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::atan(self.0))
+                }
+                fn atan2(self, other: Self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::atan2(self.0, other.0))
+                }
+                fn sin_cos(self) -> (Self, Self) {
+                    let (x, y) = <#inner_ty as _num_traits::Float>::sin_cos(self.0);
+                    (#name(x), #name(y))
+                }
+                fn exp_m1(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::exp_m1(self.0))
+                }
+                fn ln_1p(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::ln_1p(self.0))
+                }
+                fn sinh(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::sinh(self.0))
+                }
+                fn cosh(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::cosh(self.0))
+                }
+                fn tanh(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::tanh(self.0))
+                }
+                fn asinh(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::asinh(self.0))
+                }
+                fn acosh(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::acosh(self.0))
+                }
+                fn atanh(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::atanh(self.0))
+                }
+                fn integer_decode(self) -> (u64, i16, i8) {
+                    <#inner_ty as _num_traits::Float>::integer_decode(self.0)
+                }
+                fn epsilon() -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::epsilon())
+                }
+                fn to_degrees(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::to_degrees(self.0))
+                }
+                fn to_radians(self) -> Self {
+                    #name(<#inner_ty as _num_traits::Float>::to_radians(self.0))
+                }
             }
-            fn infinity() -> Self {
-                #name(<#inner_ty as _num_traits::Float>::infinity())
-            }
-            fn neg_infinity() -> Self {
-                #name(<#inner_ty as _num_traits::Float>::neg_infinity())
-            }
-            fn neg_zero() -> Self {
-                #name(<#inner_ty as _num_traits::Float>::neg_zero())
-            }
-            fn min_value() -> Self {
-                #name(<#inner_ty as _num_traits::Float>::min_value())
-            }
-            fn min_positive_value() -> Self {
-                #name(<#inner_ty as _num_traits::Float>::min_positive_value())
-            }
-            fn max_value() -> Self {
-                #name(<#inner_ty as _num_traits::Float>::max_value())
-            }
-            fn is_nan(self) -> bool {
-                <#inner_ty as _num_traits::Float>::is_nan(self.0)
-            }
-            fn is_infinite(self) -> bool {
-                <#inner_ty as _num_traits::Float>::is_infinite(self.0)
-            }
-            fn is_finite(self) -> bool {
-                <#inner_ty as _num_traits::Float>::is_finite(self.0)
-            }
-            fn is_normal(self) -> bool {
-                <#inner_ty as _num_traits::Float>::is_normal(self.0)
-            }
-            fn classify(self) -> ::std::num::FpCategory {
-                <#inner_ty as _num_traits::Float>::classify(self.0)
-            }
-            fn floor(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::floor(self.0))
-            }
-            fn ceil(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::ceil(self.0))
-            }
-            fn round(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::round(self.0))
-            }
-            fn trunc(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::trunc(self.0))
-            }
-            fn fract(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::fract(self.0))
-            }
-            fn abs(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::abs(self.0))
-            }
-            fn signum(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::signum(self.0))
-            }
-            fn is_sign_positive(self) -> bool {
-                <#inner_ty as _num_traits::Float>::is_sign_positive(self.0)
-            }
-            fn is_sign_negative(self) -> bool {
-                <#inner_ty as _num_traits::Float>::is_sign_negative(self.0)
-            }
-            fn mul_add(self, a: Self, b: Self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::mul_add(self.0, a.0, b.0))
-            }
-            fn recip(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::recip(self.0))
-            }
-            fn powi(self, n: i32) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::powi(self.0, n))
-            }
-            fn powf(self, n: Self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::powf(self.0, n.0))
-            }
-            fn sqrt(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::sqrt(self.0))
-            }
-            fn exp(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::exp(self.0))
-            }
-            fn exp2(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::exp2(self.0))
-            }
-            fn ln(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::ln(self.0))
-            }
-            fn log(self, base: Self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::log(self.0, base.0))
-            }
-            fn log2(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::log2(self.0))
-            }
-            fn log10(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::log10(self.0))
-            }
-            fn max(self, other: Self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::max(self.0, other.0))
-            }
-            fn min(self, other: Self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::min(self.0, other.0))
-            }
-            fn abs_sub(self, other: Self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::abs_sub(self.0, other.0))
-            }
-            fn cbrt(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::cbrt(self.0))
-            }
-            fn hypot(self, other: Self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::hypot(self.0, other.0))
-            }
-            fn sin(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::sin(self.0))
-            }
-            fn cos(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::cos(self.0))
-            }
-            fn tan(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::tan(self.0))
-            }
-            fn asin(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::asin(self.0))
-            }
-            fn acos(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::acos(self.0))
-            }
-            fn atan(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::atan(self.0))
-            }
-            fn atan2(self, other: Self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::atan2(self.0, other.0))
-            }
-            fn sin_cos(self) -> (Self, Self) {
-                let (x, y) = <#inner_ty as _num_traits::Float>::sin_cos(self.0);
-                (#name(x), #name(y))
-            }
-            fn exp_m1(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::exp_m1(self.0))
-            }
-            fn ln_1p(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::ln_1p(self.0))
-            }
-            fn sinh(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::sinh(self.0))
-            }
-            fn cosh(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::cosh(self.0))
-            }
-            fn tanh(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::tanh(self.0))
-            }
-            fn asinh(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::asinh(self.0))
-            }
-            fn acosh(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::acosh(self.0))
-            }
-            fn atanh(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::atanh(self.0))
-            }
-            fn integer_decode(self) -> (u64, i16, i8) {
-                <#inner_ty as _num_traits::Float>::integer_decode(self.0)
-            }
-            fn epsilon() -> Self {
-                #name(<#inner_ty as _num_traits::Float>::epsilon())
-            }
-            fn to_degrees(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::to_degrees(self.0))
-            }
-            fn to_radians(self) -> Self {
-                #name(<#inner_ty as _num_traits::Float>::to_radians(self.0))
-            }
-        }
-    }).into()
+        },
+    ).into()
 }

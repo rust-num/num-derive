@@ -8,7 +8,7 @@ categories = [ "science" ]
 license = "MIT/Apache-2.0"
 name = "num-derive"
 repository = "https://github.com/rust-num/num-derive"
-version = "0.2.2"
+version = "0.2.3"
 readme = "README.md"
 build = "build.rs"
 
@@ -16,7 +16,7 @@ build = "build.rs"
 num-traits = "0.2"
 proc-macro2 = "0.4.2"
 quote = "0.6"
-syn = "0.14"
+syn = "0.15"
 
 [dev-dependencies]
 num = "0.2"

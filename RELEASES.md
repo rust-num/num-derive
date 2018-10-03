@@ -1,7 +1,8 @@
-# Unreleased
+# Release 0.2.3 (2018-10-03)
 
 - [Added newtype deriving][17] for `FromPrimitive`, `ToPrimitive`,
   `NumOps<Self, Self>`, `NumCast`, `Zero`, `One`, `Num`, and `Float`.
+  Thanks @asayers!
 
 [17]: https://github.com/rust-num/num-derive/pull/17
 
