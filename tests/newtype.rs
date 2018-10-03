@@ -35,8 +35,22 @@ fn test_from_primitive() {
 }
 
 #[test]
+#[cfg(has_i128)]
+fn test_from_primitive_128() {
+    assert_eq!(MyFloat::from_i128(std::i128::MIN), Some(MyFloat(-2.0.powi(127))));
+}
+
+#[test]
 fn test_to_primitive() {
     assert_eq!(MyFloat(25.0).to_u32(), Some(25));
+}
+
+#[test]
+#[cfg(has_i128)]
+fn test_to_primitive_128() {
+    let f = MyFloat::from_f32(std::f32::MAX).unwrap();
+    assert_eq!(f.to_i128(), None);
+    assert_eq!(f.to_u128(), Some(0xffff_ff00_0000_0000_0000_0000_0000_0000));
 }
 
 #[test]
