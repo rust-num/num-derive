@@ -2,7 +2,7 @@ extern crate num as num_renamed;
 #[macro_use]
 extern crate num_derive;
 
-use num_renamed::{FromPrimitive, ToPrimitive, NumCast, One, Zero, Num, Float};
+use num_renamed::{Float, FromPrimitive, Num, NumCast, One, ToPrimitive, Zero};
 use std::ops::Neg;
 
 #[derive(
@@ -37,7 +37,10 @@ fn test_from_primitive() {
 #[test]
 #[cfg(has_i128)]
 fn test_from_primitive_128() {
-    assert_eq!(MyFloat::from_i128(std::i128::MIN), Some(MyFloat(-2.0.powi(127))));
+    assert_eq!(
+        MyFloat::from_i128(std::i128::MIN),
+        Some(MyFloat(-2.0.powi(127)))
+    );
 }
 
 #[test]
