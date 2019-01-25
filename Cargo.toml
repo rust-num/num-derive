@@ -13,13 +13,13 @@ readme = "README.md"
 build = "build.rs"
 
 [dependencies]
-num-traits = "0.2"
 proc-macro2 = "0.4.2"
 quote = "0.6"
 syn = "0.15"
 
 [dev-dependencies]
 num = "0.2"
+num-traits = "0.2"
 
 [features]
 full-syntax = ["syn/full"]
