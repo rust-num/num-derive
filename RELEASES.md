@@ -1,3 +1,9 @@
+# Release 0.2.4 (2019-01-25)
+
+- [Adjusted dependencies to allow no-std targets][22].
+
+[22]: https://github.com/rust-num/num-derive/pull/22
+
 # Release 0.2.3 (2018-10-03)
 
 - [Added newtype deriving][17] for `FromPrimitive`, `ToPrimitive`,

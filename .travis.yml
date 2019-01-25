@@ -8,6 +8,19 @@ env:
   matrix:
     - # no features
     - FEATURES="full-syntax"
+
+matrix:
+  include:
+    # try a no-std target
+    - rust: stable
+      env: TARGET=thumbv6m-none-eabi
+      before_script:
+        - rustup target add "$TARGET"
+      script:
+        # This test crate is intentionally separate, because we need
+        # independent features for no-std. (rust-lang/cargo#2589)
+        - cd check && cargo check --target "$TARGET"
+
 sudo: false
 script:
   - cargo build --verbose --features="$FEATURES"

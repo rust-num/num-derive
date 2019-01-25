@@ -178,7 +178,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
                 }
             }
         } else {
-            quote!{}
+            quote! {}
         };
 
         quote! {
@@ -251,7 +251,8 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
                         Some(#name::#ident)
                     }
                 }
-            }).collect();
+            })
+            .collect();
 
         let from_i64_var = if clauses.is_empty() {
             quote!(_)
@@ -345,7 +346,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
                 }
             }
         } else {
-            quote!{}
+            quote! {}
         };
 
         quote! {
@@ -500,7 +501,8 @@ pub fn num_ops(input: TokenStream) -> TokenStream {
                 }
             }
         },
-    ).into()
+    )
+    .into()
 }
 
 /// Derives [`num_traits::NumCast`][num_cast] for newtypes.  The inner type must already implement
@@ -523,7 +525,8 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
                 }
             }
         },
-    ).into()
+    )
+    .into()
 }
 
 /// Derives [`num_traits::Zero`][zero] for newtypes.  The inner type must already implement `Zero`.
@@ -548,7 +551,8 @@ pub fn zero(input: TokenStream) -> TokenStream {
                 }
             }
         },
-    ).into()
+    )
+    .into()
 }
 
 /// Derives [`num_traits::One`][one] for newtypes.  The inner type must already implement `One`.
@@ -573,7 +577,8 @@ pub fn one(input: TokenStream) -> TokenStream {
                 }
             }
         },
-    ).into()
+    )
+    .into()
 }
 
 /// Derives [`num_traits::Num`][num] for newtypes.  The inner type must already implement `Num`.
@@ -596,7 +601,8 @@ pub fn num(input: TokenStream) -> TokenStream {
                 }
             }
         },
-    ).into()
+    )
+    .into()
 }
 
 /// Derives [`num_traits::Float`][float] for newtypes.  The inner type must already implement
@@ -788,5 +794,6 @@ pub fn float(input: TokenStream) -> TokenStream {
                 }
             }
         },
-    ).into()
+    )
+    .into()
 }
