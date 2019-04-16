@@ -1,6 +1,10 @@
 language: rust
+sudo: false
 rust:
   - 1.15.0
+  - 1.20.0
+  - 1.26.0 # has_i128
+  - 1.31.0 # 2018!
   - stable
   - beta
   - nightly
@@ -8,11 +12,15 @@ env:
   matrix:
     - # no features
     - FEATURES="full-syntax"
+script:
+  - cargo build --verbose --features="$FEATURES"
+  - ./ci/test_full.sh
 
 matrix:
   include:
     # try a no-std target
-    - rust: stable
+    - name: "no_std"
+      rust: stable
       env: TARGET=thumbv6m-none-eabi
       before_script:
         - rustup target add "$TARGET"
@@ -21,10 +29,13 @@ matrix:
         # independent features for no-std. (rust-lang/cargo#2589)
         - cd check && cargo check --target "$TARGET"
 
-sudo: false
-script:
-  - cargo build --verbose --features="$FEATURES"
-  - ./ci/test_full.sh
+    - name: "rustfmt"
+      rust: 1.31.0
+      before_script:
+        - rustup component add rustfmt
+      script:
+        - cargo fmt --all -- --check
+
 notifications:
   email:
     on_success: never
