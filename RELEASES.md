@@ -1,3 +1,9 @@
+# Release 0.2.5 (2019-04-23)
+
+- [Improved the masking of lints in derived code][23].
+
+[23]: https://github.com/rust-num/num-derive/pull/23
+
 # Release 0.2.4 (2019-01-25)
 
 - [Adjusted dependencies to allow no-std targets][22].
