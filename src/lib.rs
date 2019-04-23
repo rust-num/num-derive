@@ -74,18 +74,27 @@ fn dummy_const_trick<T: quote::ToTokens>(
     exp: T,
 ) -> proc_macro2::TokenStream {
     let dummy_const = Ident::new(
-        &format!(
-            "_IMPL_NUM_{}_FOR_{}",
-            trait_.to_uppercase(),
-            format!("{}", name).to_uppercase()
-        ),
+        &format!("_IMPL_NUM_{}_FOR_{}", trait_, unraw(name)),
         Span::call_site(),
     );
     quote! {
+        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
         const #dummy_const: () = {
+            #[allow(unknown_lints)]
+            #[cfg_attr(feature = "cargo-clippy", allow(useless_attribute))]
+            #[allow(rust_2018_idioms)]
+            extern crate num_traits as _num_traits;
             #exp
         };
     }
+}
+
+#[allow(deprecated)]
+fn unraw(ident: &proc_macro2::Ident) -> String {
+    // str::trim_start_matches was added in 1.30, trim_left_matches deprecated
+    // in 1.33. We currently support rustc back to 1.15 so we need to continue
+    // to use the deprecated one.
+    ident.to_string().trim_left_matches("r#").to_owned()
 }
 
 // If `data` is a newtype, return the type it's wrapping.
@@ -182,7 +191,6 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         };
 
         quote! {
-            extern crate num_traits as _num_traits;
             impl _num_traits::FromPrimitive for #name {
                 fn from_i64(n: i64) -> Option<Self> {
                     <#inner_ty as _num_traits::FromPrimitive>::from_i64(n).map(#name)
@@ -261,9 +269,6 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         };
 
         quote! {
-            #[allow(unused_qualifications)]
-            extern crate num_traits as _num_traits;
-
             impl _num_traits::FromPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 fn from_i64(#from_i64_var: i64) -> Option<Self> {
@@ -350,7 +355,6 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         };
 
         quote! {
-            extern crate num_traits as _num_traits;
             impl _num_traits::ToPrimitive for #name {
                 fn to_i64(&self) -> Option<i64> {
                     <#inner_ty as _num_traits::ToPrimitive>::to_i64(&self.0)
@@ -432,9 +436,6 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         };
 
         quote! {
-            #[allow(unused_qualifications)]
-            extern crate num_traits as _num_traits;
-
             impl _num_traits::ToPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 fn to_i64(&self) -> Option<i64> {
@@ -518,7 +519,6 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
         "NumCast",
         &name,
         quote! {
-            extern crate num_traits as _num_traits;
             impl _num_traits::NumCast for #name {
                 fn from<T: _num_traits::ToPrimitive>(n: T) -> Option<Self> {
                     <#inner_ty as _num_traits::NumCast>::from(n).map(#name)
@@ -541,7 +541,6 @@ pub fn zero(input: TokenStream) -> TokenStream {
         "Zero",
         &name,
         quote! {
-            extern crate num_traits as _num_traits;
             impl _num_traits::Zero for #name {
                 fn zero() -> Self {
                     #name(<#inner_ty as _num_traits::Zero>::zero())
@@ -567,7 +566,6 @@ pub fn one(input: TokenStream) -> TokenStream {
         "One",
         &name,
         quote! {
-            extern crate num_traits as _num_traits;
             impl _num_traits::One for #name {
                 fn one() -> Self {
                     #name(<#inner_ty as _num_traits::One>::one())
@@ -593,7 +591,6 @@ pub fn num(input: TokenStream) -> TokenStream {
         "Num",
         &name,
         quote! {
-            extern crate num_traits as _num_traits;
             impl _num_traits::Num for #name {
                 type FromStrRadixErr = <#inner_ty as _num_traits::Num>::FromStrRadixErr;
                 fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
@@ -618,7 +615,6 @@ pub fn float(input: TokenStream) -> TokenStream {
         "Float",
         &name,
         quote! {
-            extern crate num_traits as _num_traits;
             impl _num_traits::Float for #name {
                 fn nan() -> Self {
                     #name(<#inner_ty as _num_traits::Float>::nan())
