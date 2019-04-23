@@ -39,7 +39,7 @@ fn test_from_primitive() {
 fn test_from_primitive_128() {
     assert_eq!(
         MyFloat::from_i128(std::i128::MIN),
-        Some(MyFloat(-2.0.powi(127)))
+        Some(MyFloat((-2.0).powi(127)))
     );
 }
 

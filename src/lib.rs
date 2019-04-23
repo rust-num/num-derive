@@ -99,8 +99,8 @@ fn unraw(ident: &proc_macro2::Ident) -> String {
 
 // If `data` is a newtype, return the type it's wrapping.
 fn newtype_inner(data: &syn::Data) -> Option<syn::Type> {
-    match data {
-        &Data::Struct(ref s) => {
+    match *data {
+        Data::Struct(ref s) => {
             match s.fields {
                 Fields::Unnamed(ref fs) => {
                     if fs.unnamed.len() == 1 {
@@ -452,6 +452,8 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
     dummy_const_trick("ToPrimitive", &name, impl_).into()
 }
 
+#[allow(renamed_and_removed_lints)]
+#[cfg_attr(feature = "cargo-clippy", allow(const_static_lifetime))]
 const NEWTYPE_ONLY: &'static str = "This trait can only be derived for newtypes";
 
 /// Derives [`num_traits::NumOps`][num_ops] for newtypes.  The inner type must already implement
