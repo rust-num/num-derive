@@ -29,3 +29,6 @@ full-syntax = ["syn/full"]
 name = "num_derive"
 proc-macro = true
 test = false
+
+[build-dependencies]
+autocfg = "0.1.2"
