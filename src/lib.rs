@@ -41,14 +41,9 @@
 
 extern crate proc_macro;
 
-use proc_macro2;
-#[macro_use]
-extern crate quote;
-use syn;
-
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-
+use quote::quote;
 use syn::{Data, Fields, Ident};
 
 // Within `exp`, you can bring things into scope with `extern crate`.
