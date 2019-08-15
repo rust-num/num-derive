@@ -1,9 +1,6 @@
 language: rust
 sudo: false
 rust:
-  - 1.15.0
-  - 1.20.0
-  - 1.26.0 # has_i128
   - 1.31.0 # 2018!
   - stable
   - beta
