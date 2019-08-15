@@ -78,10 +78,9 @@ fn dummy_const_trick<T: quote::ToTokens>(
         Span::call_site(),
     );
     quote! {
-        #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+        #[allow(non_upper_case_globals, unused_qualifications)]
         const #dummy_const: () = {
-            #[allow(unknown_lints)]
-            #[cfg_attr(feature = "cargo-clippy", allow(useless_attribute))]
+            #[allow(clippy::useless_attribute)]
             #[allow(rust_2018_idioms)]
             extern crate num_traits as _num_traits;
             #exp
@@ -432,9 +431,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
     dummy_const_trick("ToPrimitive", &name, impl_).into()
 }
 
-#[allow(renamed_and_removed_lints)]
-#[cfg_attr(feature = "cargo-clippy", allow(const_static_lifetime))]
-const NEWTYPE_ONLY: &'static str = "This trait can only be derived for newtypes";
+const NEWTYPE_ONLY: &str = "This trait can only be derived for newtypes";
 
 /// Derives [`num_traits::NumOps`][num_ops] for newtypes.  The inner type must already implement
 /// `NumOps`.
