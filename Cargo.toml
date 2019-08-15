@@ -10,7 +10,6 @@ name = "num-derive"
 repository = "https://github.com/rust-num/num-derive"
 version = "0.3.0"
 readme = "README.md"
-build = "build.rs"
 exclude = ["/ci/*", "/.travis.yml", "/bors.toml"]
 
 [dependencies]
@@ -29,6 +28,3 @@ full-syntax = ["syn/full"]
 name = "num_derive"
 proc-macro = true
 test = false
-
-[build-dependencies]
-autocfg = "0.1.2"
