@@ -11,6 +11,7 @@ repository = "https://github.com/rust-num/num-derive"
 version = "0.3.0"
 readme = "README.md"
 exclude = ["/ci/*", "/.travis.yml", "/bors.toml"]
+edition = "2018"
 
 [dependencies]
 proc-macro2 = "1"
@@ -28,3 +29,14 @@ full-syntax = ["syn/full"]
 name = "num_derive"
 proc-macro = true
 test = false
+
+# Most of the tests are left implicily detected, compiled for Rust 2018,
+# but let's try a few of them with the old 2015 edition too.
+
+[[test]]
+name = "newtype-2015"
+edition = "2015"
+
+[[test]]
+name = "trivial-2015"
+edition = "2015"
