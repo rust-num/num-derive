@@ -2,7 +2,7 @@ extern crate num as num_renamed;
 #[macro_use]
 extern crate num_derive;
 
-use num_renamed::{Float, FromPrimitive, Num, NumCast, One, ToPrimitive, Zero};
+use crate::num_renamed::{Float, FromPrimitive, Num, NumCast, One, ToPrimitive, Zero};
 use std::ops::Neg;
 
 #[derive(
