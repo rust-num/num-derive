@@ -45,3 +45,6 @@ done
 # test all supported features
 cargo build --features="${FEATURES[*]}"
 cargo test --features="${FEATURES[*]}"
+
+cd check; cargo test --verbose check; cd ..
+cd import; cargo test --verbose import; cd ..

@@ -38,13 +38,73 @@
 //! }
 //! # fn main() {}
 //! ```
+//!
+//! ## Explicit import
+//!
+//! By default the `num_derive` procedural macros assume that the
+//! `num_traits` crate is a direct dependency. If `num_traits` is instead
+//! a transitive dependency, the `num_traits` helper attribute can be
+//! used to tell `num_derive` to use a specific identifier for its imports.
+//!
+//! ```rust
+//! #[macro_use]
+//! extern crate num_derive;
+//! // Lets pretend this is a transitive dependency from another crate
+//! // reexported as `some_other_ident`.
+//! extern crate num_traits as some_other_ident;
+//!
+//! #[derive(FromPrimitive, ToPrimitive)]
+//! #[num_traits = "some_other_ident"]
+//! enum Color {
+//!     Red,
+//!     Blue,
+//!     Green,
+//! }
+//! # fn main() {}
+//! ```
 
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{Data, Fields, Ident};
+use std::fmt;
+use syn::{Data, Fields, Ident, Path};
+
+#[derive(Copy, Clone)]
+struct Symbol(&'static str);
+
+const NUM_TRAITS: Symbol = Symbol("num_traits");
+
+impl PartialEq<Symbol> for Ident {
+    fn eq(&self, word: &Symbol) -> bool {
+        self == word.0
+    }
+}
+
+impl<'a> PartialEq<Symbol> for &'a Ident {
+    fn eq(&self, word: &Symbol) -> bool {
+        *self == word.0
+    }
+}
+
+impl PartialEq<Symbol> for Path {
+    fn eq(&self, word: &Symbol) -> bool {
+        self.is_ident(word.0)
+    }
+}
+
+impl<'a> PartialEq<Symbol> for &'a Path {
+    fn eq(&self, word: &Symbol) -> bool {
+        self.is_ident(word.0)
+    }
+}
+
+impl fmt::Display for Symbol {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str(self.0)
+    }
+}
 
 // Within `exp`, you can bring things into scope with `extern crate`.
 //
@@ -52,7 +112,7 @@ use syn::{Data, Fields, Ident};
 // different name, or may have imported it in a non-toplevel module (common when putting impls
 // behind a feature gate).
 //
-// Solution: let's just generate `extern crate num_traits as _num_traits` and then refer to
+// Solution: let's just generate `extern crate num_traits as `_num_traits` and then refer to
 // `_num_traits` in the derived code.  However, macros are not allowed to produce `extern crate`
 // statements at the toplevel.
 //
@@ -113,6 +173,28 @@ fn newtype_inner(data: &syn::Data) -> Option<syn::Type> {
     }
 }
 
+// If there as `num_traits` MetaNameValue attribute within the slice,
+// retreive its value, and use it to create a Ident to be used to import
+// the `num_traits` crate.
+fn find_explicit_import_ident(attrs: &[syn::Attribute]) -> Option<syn::Ident> {
+    for attr in attrs {
+        if let Ok(syn::Meta::NameValue(mnv)) = attr.parse_meta() {
+            if mnv.path == NUM_TRAITS {
+                match mnv.lit {
+                    syn::Lit::Str(lit_str) => {
+                        let import_str = &lit_str.value();
+                        let span = proc_macro2::Span::call_site();
+                        let import_ident = syn::Ident::new(import_str, span);
+                        return Some(import_ident);
+                    }
+                    _ => panic!("#[{}] attribute value must be a str", NUM_TRAITS),
+                }
+            }
+        }
+    }
+    None
+}
+
 /// Derives [`num_traits::FromPrimitive`][from] for simple enums and newtypes.
 ///
 /// [from]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.FromPrimitive.html
@@ -161,55 +243,63 @@ fn newtype_inner(data: &syn::Data) -> Option<syn::Type> {
 /// }
 /// # fn main() {}
 /// ```
-#[proc_macro_derive(FromPrimitive)]
+#[proc_macro_derive(FromPrimitive, attributes(num_traits))]
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
 
+    let explicit_import = find_explicit_import_ident(&ast.attrs);
+    let is_explicit_import = explicit_import.is_some();
+
+    let import = match explicit_import {
+        Some(ident) => ident,
+        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
+    };
+
     let impl_ = if let Some(inner_ty) = newtype_inner(&ast.data) {
         quote! {
-            impl _num_traits::FromPrimitive for #name {
+            impl #import::FromPrimitive for #name {
                 fn from_i64(n: i64) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_i64(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_i64(n).map(#name)
                 }
                 fn from_u64(n: u64) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_u64(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_u64(n).map(#name)
                 }
                 fn from_isize(n: isize) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_isize(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_isize(n).map(#name)
                 }
                 fn from_i8(n: i8) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_i8(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_i8(n).map(#name)
                 }
                 fn from_i16(n: i16) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_i16(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_i16(n).map(#name)
                 }
                 fn from_i32(n: i32) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_i32(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_i32(n).map(#name)
                 }
                 fn from_i128(n: i128) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_i128(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_i128(n).map(#name)
                 }
                 fn from_usize(n: usize) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_usize(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_usize(n).map(#name)
                 }
                 fn from_u8(n: u8) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_u8(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_u8(n).map(#name)
                 }
                 fn from_u16(n: u16) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_u16(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_u16(n).map(#name)
                 }
                 fn from_u32(n: u32) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_u32(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_u32(n).map(#name)
                 }
                 fn from_u128(n: u128) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_u128(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_u128(n).map(#name)
                 }
                 fn from_f32(n: f32) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_f32(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_f32(n).map(#name)
                 }
                 fn from_f64(n: f64) -> Option<Self> {
-                    <#inner_ty as _num_traits::FromPrimitive>::from_f64(n).map(#name)
+                    <#inner_ty as #import::FromPrimitive>::from_f64(n).map(#name)
                 }
             }
         }
@@ -251,7 +341,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         };
 
         quote! {
-            impl _num_traits::FromPrimitive for #name {
+            impl #import::FromPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 fn from_i64(#from_i64_var: i64) -> Option<Self> {
                     #(#clauses else)* {
@@ -266,7 +356,11 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         }
     };
 
-    dummy_const_trick("FromPrimitive", &name, impl_).into()
+    if is_explicit_import {
+        impl_.into()
+    } else {
+        dummy_const_trick("FromPrimitive", &name, impl_).into()
+    }
 }
 
 /// Derives [`num_traits::ToPrimitive`][to] for simple enums and newtypes.
@@ -322,50 +416,58 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
 
+    let explicit_import = find_explicit_import_ident(&ast.attrs);
+    let is_explicit_import = explicit_import.is_some();
+
+    let import = match explicit_import {
+        Some(ident) => ident,
+        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
+    };
+
     let impl_ = if let Some(inner_ty) = newtype_inner(&ast.data) {
         quote! {
-            impl _num_traits::ToPrimitive for #name {
+            impl #import::ToPrimitive for #name {
                 fn to_i64(&self) -> Option<i64> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_i64(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_i64(&self.0)
                 }
                 fn to_u64(&self) -> Option<u64> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_u64(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_u64(&self.0)
                 }
                 fn to_isize(&self) -> Option<isize> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_isize(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_isize(&self.0)
                 }
                 fn to_i8(&self) -> Option<i8> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_i8(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_i8(&self.0)
                 }
                 fn to_i16(&self) -> Option<i16> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_i16(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_i16(&self.0)
                 }
                 fn to_i32(&self) -> Option<i32> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_i32(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_i32(&self.0)
                 }
                 fn to_i128(&self) -> Option<i128> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_i128(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_i128(&self.0)
                 }
                 fn to_usize(&self) -> Option<usize> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_usize(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_usize(&self.0)
                 }
                 fn to_u8(&self) -> Option<u8> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_u8(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_u8(&self.0)
                 }
                 fn to_u16(&self) -> Option<u16> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_u16(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_u16(&self.0)
                 }
                 fn to_u32(&self) -> Option<u32> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_u32(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_u32(&self.0)
                 }
                 fn to_u128(&self) -> Option<u128> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_u128(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_u128(&self.0)
                 }
                 fn to_f32(&self) -> Option<f32> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_f32(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_f32(&self.0)
                 }
                 fn to_f64(&self) -> Option<f64> {
-                    <#inner_ty as _num_traits::ToPrimitive>::to_f64(&self.0)
+                    <#inner_ty as #import::ToPrimitive>::to_f64(&self.0)
                 }
             }
         }
@@ -410,7 +512,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         };
 
         quote! {
-            impl _num_traits::ToPrimitive for #name {
+            impl #import::ToPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 fn to_i64(&self) -> Option<i64> {
                     #match_expr
@@ -423,7 +525,11 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         }
     };
 
-    dummy_const_trick("ToPrimitive", &name, impl_).into()
+    if is_explicit_import {
+        impl_.into()
+    } else {
+        dummy_const_trick("ToPrimitive", &name, impl_).into()
+    }
 }
 
 const NEWTYPE_ONLY: &str = "This trait can only be derived for newtypes";
@@ -489,18 +595,28 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick(
-        "NumCast",
-        &name,
-        quote! {
-            impl _num_traits::NumCast for #name {
-                fn from<T: _num_traits::ToPrimitive>(n: T) -> Option<Self> {
-                    <#inner_ty as _num_traits::NumCast>::from(n).map(#name)
-                }
+
+    let explicit_import = find_explicit_import_ident(&ast.attrs);
+    let is_explicit_import = explicit_import.is_some();
+
+    let import = match explicit_import {
+        Some(ident) => ident,
+        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
+    };
+
+    let impl_ = quote! {
+        impl #import::NumCast for #name {
+            fn from<T: #import::ToPrimitive>(n: T) -> Option<Self> {
+                <#inner_ty as #import::NumCast>::from(n).map(#name)
             }
-        },
-    )
-    .into()
+        }
+    };
+
+    if is_explicit_import {
+        impl_.into()
+    } else {
+        dummy_const_trick("NumCast", &name, impl_).into()
+    }
 }
 
 /// Derives [`num_traits::Zero`][zero] for newtypes.  The inner type must already implement `Zero`.
@@ -511,21 +627,31 @@ pub fn zero(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick(
-        "Zero",
-        &name,
-        quote! {
-            impl _num_traits::Zero for #name {
-                fn zero() -> Self {
-                    #name(<#inner_ty as _num_traits::Zero>::zero())
-                }
-                fn is_zero(&self) -> bool {
-                    <#inner_ty as _num_traits::Zero>::is_zero(&self.0)
-                }
+
+    let explicit_import = find_explicit_import_ident(&ast.attrs);
+    let is_explicit_import = explicit_import.is_some();
+
+    let import = match explicit_import {
+        Some(ident) => ident,
+        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
+    };
+
+    let impl_ = quote! {
+        impl #import::Zero for #name {
+            fn zero() -> Self {
+                #name(<#inner_ty as #import::Zero>::zero())
             }
-        },
-    )
-    .into()
+            fn is_zero(&self) -> bool {
+                <#inner_ty as #import::Zero>::is_zero(&self.0)
+            }
+        }
+    };
+
+    if is_explicit_import {
+        impl_.into()
+    } else {
+        dummy_const_trick("Zero", &name, impl_).into()
+    }
 }
 
 /// Derives [`num_traits::One`][one] for newtypes.  The inner type must already implement `One`.
@@ -536,21 +662,31 @@ pub fn one(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick(
-        "One",
-        &name,
-        quote! {
-            impl _num_traits::One for #name {
-                fn one() -> Self {
-                    #name(<#inner_ty as _num_traits::One>::one())
-                }
-                fn is_one(&self) -> bool {
-                    <#inner_ty as _num_traits::One>::is_one(&self.0)
-                }
+
+    let explicit_import = find_explicit_import_ident(&ast.attrs);
+    let is_explicit_import = explicit_import.is_some();
+
+    let import = match explicit_import {
+        Some(ident) => ident,
+        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
+    };
+
+    let impl_ = quote! {
+        impl #import::One for #name {
+            fn one() -> Self {
+                #name(<#inner_ty as #import::One>::one())
             }
-        },
-    )
-    .into()
+            fn is_one(&self) -> bool {
+                <#inner_ty as #import::One>::is_one(&self.0)
+            }
+        }
+    };
+
+    if is_explicit_import {
+        impl_.into()
+    } else {
+        dummy_const_trick("One", &name, impl_).into()
+    }
 }
 
 /// Derives [`num_traits::Num`][num] for newtypes.  The inner type must already implement `Num`.
@@ -561,19 +697,29 @@ pub fn num(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick(
-        "Num",
-        &name,
-        quote! {
-            impl _num_traits::Num for #name {
-                type FromStrRadixErr = <#inner_ty as _num_traits::Num>::FromStrRadixErr;
-                fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
-                    <#inner_ty as _num_traits::Num>::from_str_radix(s, radix).map(#name)
-                }
+
+    let explicit_import = find_explicit_import_ident(&ast.attrs);
+    let is_explicit_import = explicit_import.is_some();
+
+    let import = match explicit_import {
+        Some(ident) => ident,
+        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
+    };
+
+    let impl_ = quote! {
+        impl #import::Num for #name {
+            type FromStrRadixErr = <#inner_ty as #import::Num>::FromStrRadixErr;
+            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
+                <#inner_ty as #import::Num>::from_str_radix(s, radix).map(#name)
             }
-        },
-    )
-    .into()
+        }
+    };
+
+    if is_explicit_import {
+        impl_.into()
+    } else {
+        dummy_const_trick("Num", &name, impl_).into()
+    }
 }
 
 /// Derives [`num_traits::Float`][float] for newtypes.  The inner type must already implement
@@ -585,185 +731,195 @@ pub fn float(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick(
-        "Float",
-        &name,
-        quote! {
-            impl _num_traits::Float for #name {
-                fn nan() -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::nan())
-                }
-                fn infinity() -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::infinity())
-                }
-                fn neg_infinity() -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::neg_infinity())
-                }
-                fn neg_zero() -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::neg_zero())
-                }
-                fn min_value() -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::min_value())
-                }
-                fn min_positive_value() -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::min_positive_value())
-                }
-                fn max_value() -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::max_value())
-                }
-                fn is_nan(self) -> bool {
-                    <#inner_ty as _num_traits::Float>::is_nan(self.0)
-                }
-                fn is_infinite(self) -> bool {
-                    <#inner_ty as _num_traits::Float>::is_infinite(self.0)
-                }
-                fn is_finite(self) -> bool {
-                    <#inner_ty as _num_traits::Float>::is_finite(self.0)
-                }
-                fn is_normal(self) -> bool {
-                    <#inner_ty as _num_traits::Float>::is_normal(self.0)
-                }
-                fn classify(self) -> ::std::num::FpCategory {
-                    <#inner_ty as _num_traits::Float>::classify(self.0)
-                }
-                fn floor(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::floor(self.0))
-                }
-                fn ceil(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::ceil(self.0))
-                }
-                fn round(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::round(self.0))
-                }
-                fn trunc(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::trunc(self.0))
-                }
-                fn fract(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::fract(self.0))
-                }
-                fn abs(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::abs(self.0))
-                }
-                fn signum(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::signum(self.0))
-                }
-                fn is_sign_positive(self) -> bool {
-                    <#inner_ty as _num_traits::Float>::is_sign_positive(self.0)
-                }
-                fn is_sign_negative(self) -> bool {
-                    <#inner_ty as _num_traits::Float>::is_sign_negative(self.0)
-                }
-                fn mul_add(self, a: Self, b: Self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::mul_add(self.0, a.0, b.0))
-                }
-                fn recip(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::recip(self.0))
-                }
-                fn powi(self, n: i32) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::powi(self.0, n))
-                }
-                fn powf(self, n: Self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::powf(self.0, n.0))
-                }
-                fn sqrt(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::sqrt(self.0))
-                }
-                fn exp(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::exp(self.0))
-                }
-                fn exp2(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::exp2(self.0))
-                }
-                fn ln(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::ln(self.0))
-                }
-                fn log(self, base: Self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::log(self.0, base.0))
-                }
-                fn log2(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::log2(self.0))
-                }
-                fn log10(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::log10(self.0))
-                }
-                fn max(self, other: Self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::max(self.0, other.0))
-                }
-                fn min(self, other: Self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::min(self.0, other.0))
-                }
-                fn abs_sub(self, other: Self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::abs_sub(self.0, other.0))
-                }
-                fn cbrt(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::cbrt(self.0))
-                }
-                fn hypot(self, other: Self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::hypot(self.0, other.0))
-                }
-                fn sin(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::sin(self.0))
-                }
-                fn cos(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::cos(self.0))
-                }
-                fn tan(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::tan(self.0))
-                }
-                fn asin(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::asin(self.0))
-                }
-                fn acos(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::acos(self.0))
-                }
-                fn atan(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::atan(self.0))
-                }
-                fn atan2(self, other: Self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::atan2(self.0, other.0))
-                }
-                fn sin_cos(self) -> (Self, Self) {
-                    let (x, y) = <#inner_ty as _num_traits::Float>::sin_cos(self.0);
-                    (#name(x), #name(y))
-                }
-                fn exp_m1(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::exp_m1(self.0))
-                }
-                fn ln_1p(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::ln_1p(self.0))
-                }
-                fn sinh(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::sinh(self.0))
-                }
-                fn cosh(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::cosh(self.0))
-                }
-                fn tanh(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::tanh(self.0))
-                }
-                fn asinh(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::asinh(self.0))
-                }
-                fn acosh(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::acosh(self.0))
-                }
-                fn atanh(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::atanh(self.0))
-                }
-                fn integer_decode(self) -> (u64, i16, i8) {
-                    <#inner_ty as _num_traits::Float>::integer_decode(self.0)
-                }
-                fn epsilon() -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::epsilon())
-                }
-                fn to_degrees(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::to_degrees(self.0))
-                }
-                fn to_radians(self) -> Self {
-                    #name(<#inner_ty as _num_traits::Float>::to_radians(self.0))
-                }
+
+    let explicit_import = find_explicit_import_ident(&ast.attrs);
+    let is_explicit_import = explicit_import.is_some();
+
+    let import = match explicit_import {
+        Some(ident) => ident,
+        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
+    };
+
+    let impl_ = quote! {
+        impl #import::Float for #name {
+            fn nan() -> Self {
+                #name(<#inner_ty as #import::Float>::nan())
             }
-        },
-    )
-    .into()
+            fn infinity() -> Self {
+                #name(<#inner_ty as #import::Float>::infinity())
+            }
+            fn neg_infinity() -> Self {
+                #name(<#inner_ty as #import::Float>::neg_infinity())
+            }
+            fn neg_zero() -> Self {
+                #name(<#inner_ty as #import::Float>::neg_zero())
+            }
+            fn min_value() -> Self {
+                #name(<#inner_ty as #import::Float>::min_value())
+            }
+            fn min_positive_value() -> Self {
+                #name(<#inner_ty as #import::Float>::min_positive_value())
+            }
+            fn max_value() -> Self {
+                #name(<#inner_ty as #import::Float>::max_value())
+            }
+            fn is_nan(self) -> bool {
+                <#inner_ty as #import::Float>::is_nan(self.0)
+            }
+            fn is_infinite(self) -> bool {
+                <#inner_ty as #import::Float>::is_infinite(self.0)
+            }
+            fn is_finite(self) -> bool {
+                <#inner_ty as #import::Float>::is_finite(self.0)
+            }
+            fn is_normal(self) -> bool {
+                <#inner_ty as #import::Float>::is_normal(self.0)
+            }
+            fn classify(self) -> ::std::num::FpCategory {
+                <#inner_ty as #import::Float>::classify(self.0)
+            }
+            fn floor(self) -> Self {
+                #name(<#inner_ty as #import::Float>::floor(self.0))
+            }
+            fn ceil(self) -> Self {
+                #name(<#inner_ty as #import::Float>::ceil(self.0))
+            }
+            fn round(self) -> Self {
+                #name(<#inner_ty as #import::Float>::round(self.0))
+            }
+            fn trunc(self) -> Self {
+                #name(<#inner_ty as #import::Float>::trunc(self.0))
+            }
+            fn fract(self) -> Self {
+                #name(<#inner_ty as #import::Float>::fract(self.0))
+            }
+            fn abs(self) -> Self {
+                #name(<#inner_ty as #import::Float>::abs(self.0))
+            }
+            fn signum(self) -> Self {
+                #name(<#inner_ty as #import::Float>::signum(self.0))
+            }
+            fn is_sign_positive(self) -> bool {
+                <#inner_ty as #import::Float>::is_sign_positive(self.0)
+            }
+            fn is_sign_negative(self) -> bool {
+                <#inner_ty as #import::Float>::is_sign_negative(self.0)
+            }
+            fn mul_add(self, a: Self, b: Self) -> Self {
+                #name(<#inner_ty as #import::Float>::mul_add(self.0, a.0, b.0))
+            }
+            fn recip(self) -> Self {
+                #name(<#inner_ty as #import::Float>::recip(self.0))
+            }
+            fn powi(self, n: i32) -> Self {
+                #name(<#inner_ty as #import::Float>::powi(self.0, n))
+            }
+            fn powf(self, n: Self) -> Self {
+                #name(<#inner_ty as #import::Float>::powf(self.0, n.0))
+            }
+            fn sqrt(self) -> Self {
+                #name(<#inner_ty as #import::Float>::sqrt(self.0))
+            }
+            fn exp(self) -> Self {
+                #name(<#inner_ty as #import::Float>::exp(self.0))
+            }
+            fn exp2(self) -> Self {
+                #name(<#inner_ty as #import::Float>::exp2(self.0))
+            }
+            fn ln(self) -> Self {
+                #name(<#inner_ty as #import::Float>::ln(self.0))
+            }
+            fn log(self, base: Self) -> Self {
+                #name(<#inner_ty as #import::Float>::log(self.0, base.0))
+            }
+            fn log2(self) -> Self {
+                #name(<#inner_ty as #import::Float>::log2(self.0))
+            }
+            fn log10(self) -> Self {
+                #name(<#inner_ty as #import::Float>::log10(self.0))
+            }
+            fn max(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::Float>::max(self.0, other.0))
+            }
+            fn min(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::Float>::min(self.0, other.0))
+            }
+            fn abs_sub(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::Float>::abs_sub(self.0, other.0))
+            }
+            fn cbrt(self) -> Self {
+                #name(<#inner_ty as #import::Float>::cbrt(self.0))
+            }
+            fn hypot(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::Float>::hypot(self.0, other.0))
+            }
+            fn sin(self) -> Self {
+                #name(<#inner_ty as #import::Float>::sin(self.0))
+            }
+            fn cos(self) -> Self {
+                #name(<#inner_ty as #import::Float>::cos(self.0))
+            }
+            fn tan(self) -> Self {
+                #name(<#inner_ty as #import::Float>::tan(self.0))
+            }
+            fn asin(self) -> Self {
+                #name(<#inner_ty as #import::Float>::asin(self.0))
+            }
+            fn acos(self) -> Self {
+                #name(<#inner_ty as #import::Float>::acos(self.0))
+            }
+            fn atan(self) -> Self {
+                #name(<#inner_ty as #import::Float>::atan(self.0))
+            }
+            fn atan2(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::Float>::atan2(self.0, other.0))
+            }
+            fn sin_cos(self) -> (Self, Self) {
+                let (x, y) = <#inner_ty as #import::Float>::sin_cos(self.0);
+                (#name(x), #name(y))
+            }
+            fn exp_m1(self) -> Self {
+                #name(<#inner_ty as #import::Float>::exp_m1(self.0))
+            }
+            fn ln_1p(self) -> Self {
+                #name(<#inner_ty as #import::Float>::ln_1p(self.0))
+            }
+            fn sinh(self) -> Self {
+                #name(<#inner_ty as #import::Float>::sinh(self.0))
+            }
+            fn cosh(self) -> Self {
+                #name(<#inner_ty as #import::Float>::cosh(self.0))
+            }
+            fn tanh(self) -> Self {
+                #name(<#inner_ty as #import::Float>::tanh(self.0))
+            }
+            fn asinh(self) -> Self {
+                #name(<#inner_ty as #import::Float>::asinh(self.0))
+            }
+            fn acosh(self) -> Self {
+                #name(<#inner_ty as #import::Float>::acosh(self.0))
+            }
+            fn atanh(self) -> Self {
+                #name(<#inner_ty as #import::Float>::atanh(self.0))
+            }
+            fn integer_decode(self) -> (u64, i16, i8) {
+                <#inner_ty as #import::Float>::integer_decode(self.0)
+            }
+            fn epsilon() -> Self {
+                #name(<#inner_ty as #import::Float>::epsilon())
+            }
+            fn to_degrees(self) -> Self {
+                #name(<#inner_ty as #import::Float>::to_degrees(self.0))
+            }
+            fn to_radians(self) -> Self {
+                #name(<#inner_ty as #import::Float>::to_radians(self.0))
+            }
+        }
+    };
+
+    if is_explicit_import {
+        impl_.into()
+    } else {
+        dummy_const_trick("Float", &name, impl_).into()
+    }
 }
