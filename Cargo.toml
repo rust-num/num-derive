@@ -10,7 +10,7 @@ name = "num-derive"
 repository = "https://github.com/rust-num/num-derive"
 version = "0.3.0"
 readme = "README.md"
-exclude = ["/ci/*", "/.travis.yml", "/bors.toml"]
+exclude = ["/bors.toml", "/ci/*", "/.github/*"]
 edition = "2018"
 
 [dependencies]
