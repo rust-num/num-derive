@@ -1,0 +1,71 @@
+name: CI
+on:
+  push:
+    branches:
+      - staging
+      - trying
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [1.31.0, stable, beta, nightly]
+    steps:
+      - name: Rust install
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+      - name: Test
+        run: ./ci/test_full.sh
+
+  # try a target that doesn't have std at all
+  no_std:
+    name: No Std
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rust install
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          target: thumbv6m-none-eabi
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          # This test crate is intentionally separate, because we need
+          # independent features for no-std. (rust-lang/cargo#2589)
+          args: --target thumbv6m-none-eabi --manifest-path check/Cargo.toml
+
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rust install
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.42.0
+          profile: minimal
+          override: true
+          components: rustfmt
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Check formatting
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
