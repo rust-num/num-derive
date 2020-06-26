@@ -112,7 +112,7 @@ impl fmt::Display for Symbol {
 // different name, or may have imported it in a non-toplevel module (common when putting impls
 // behind a feature gate).
 //
-// Solution: let's just generate `extern crate num_traits as `_num_traits` and then refer to
+// Solution: let's just generate `extern crate num_traits as _num_traits` and then refer to
 // `_num_traits` in the derived code.  However, macros are not allowed to produce `extern crate`
 // statements at the toplevel.
 //
