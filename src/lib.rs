@@ -68,43 +68,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use std::fmt;
-use syn::{Data, Fields, Ident, Path};
-
-#[derive(Copy, Clone)]
-struct Symbol(&'static str);
-
-const NUM_TRAITS: Symbol = Symbol("num_traits");
-
-impl PartialEq<Symbol> for Ident {
-    fn eq(&self, word: &Symbol) -> bool {
-        self == word.0
-    }
-}
-
-impl<'a> PartialEq<Symbol> for &'a Ident {
-    fn eq(&self, word: &Symbol) -> bool {
-        *self == word.0
-    }
-}
-
-impl PartialEq<Symbol> for Path {
-    fn eq(&self, word: &Symbol) -> bool {
-        self.is_ident(word.0)
-    }
-}
-
-impl<'a> PartialEq<Symbol> for &'a Path {
-    fn eq(&self, word: &Symbol) -> bool {
-        self.is_ident(word.0)
-    }
-}
-
-impl fmt::Display for Symbol {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str(self.0)
-    }
-}
+use syn::{Data, Fields, Ident};
 
 // Within `exp`, you can bring things into scope with `extern crate`.
 //
@@ -179,7 +143,7 @@ fn newtype_inner(data: &syn::Data) -> Option<syn::Type> {
 fn find_explicit_import_ident(attrs: &[syn::Attribute]) -> Option<syn::Ident> {
     for attr in attrs {
         if let Ok(syn::Meta::NameValue(mnv)) = attr.parse_meta() {
-            if mnv.path == NUM_TRAITS {
+            if mnv.path.is_ident("num_traits") {
                 match mnv.lit {
                     syn::Lit::Str(lit_str) => {
                         let import_str = &lit_str.value();
@@ -187,7 +151,7 @@ fn find_explicit_import_ident(attrs: &[syn::Attribute]) -> Option<syn::Ident> {
                         let import_ident = syn::Ident::new(import_str, span);
                         return Some(import_ident);
                     }
-                    _ => panic!("#[{}] attribute value must be a str", NUM_TRAITS),
+                    _ => panic!("#[num_traits] attribute value must be a str"),
                 }
             }
         }
