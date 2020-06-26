@@ -46,5 +46,6 @@ done
 cargo build --features="${FEATURES[*]}"
 cargo test --features="${FEATURES[*]}"
 
-cd check; cargo test --verbose check; cd ..
-cd import; cargo test --verbose import; cd ..
+# these CI crates keep tighter control over dependencies
+cargo check --verbose --manifest-path ci/check/Cargo.toml
+cargo check --verbose --manifest-path ci/import/Cargo.toml
