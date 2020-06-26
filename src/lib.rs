@@ -174,7 +174,7 @@ fn newtype_inner(data: &syn::Data) -> Option<syn::Type> {
 }
 
 // If there as `num_traits` MetaNameValue attribute within the slice,
-// retreive its value, and use it to create a Ident to be used to import
+// retrieve its value, and use it to create an `Ident` to be used to import
 // the `num_traits` crate.
 fn find_explicit_import_ident(attrs: &[syn::Attribute]) -> Option<syn::Ident> {
     for attr in attrs {
