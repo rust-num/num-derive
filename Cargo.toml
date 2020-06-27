@@ -19,7 +19,7 @@ quote = "1"
 syn = "1"
 
 [dev-dependencies]
-num = "0.2"
+num = "0.3"
 num-traits = "0.2"
 
 [features]

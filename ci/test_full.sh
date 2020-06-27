@@ -45,3 +45,7 @@ done
 # test all supported features
 cargo build --features="${FEATURES[*]}"
 cargo test --features="${FEATURES[*]}"
+
+# these CI crates keep tighter control over dependencies
+cargo check --verbose --manifest-path ci/check/Cargo.toml
+cargo check --verbose --manifest-path ci/import/Cargo.toml

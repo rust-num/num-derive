@@ -49,7 +49,7 @@ jobs:
           command: build
           # This test crate is intentionally separate, because we need
           # independent features for no-std. (rust-lang/cargo#2589)
-          args: --target thumbv6m-none-eabi --manifest-path check/Cargo.toml
+          args: --target thumbv6m-none-eabi --manifest-path ci/check/Cargo.toml
 
   fmt:
     name: Format

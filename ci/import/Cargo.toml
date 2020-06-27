@@ -1,0 +1,10 @@
+[package]
+name = "import"
+version = "0.0.1"
+authors = ["jean-airoldie <25088801+jean-airoldie@users.noreply.github.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+num-derive = { path = "../.." }
+num = { version = "0.3", default-features = false }
