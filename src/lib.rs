@@ -66,7 +66,7 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Data, Fields, Ident};
 
@@ -87,11 +87,7 @@ use syn::{Data, Fields, Ident};
 //
 // Solution: use the dummy const trick.  For some reason, `extern crate` statements are allowed
 // here, but everything from the surrounding module is in scope.  This trick is taken from serde.
-fn dummy_const_trick<T: quote::ToTokens>(
-    trait_: &str,
-    name: &proc_macro2::Ident,
-    exp: T,
-) -> proc_macro2::TokenStream {
+fn dummy_const_trick(trait_: &str, name: &Ident, exp: TokenStream2) -> TokenStream2 {
     let dummy_const = Ident::new(
         &format!("_IMPL_NUM_{}_FOR_{}", trait_, unraw(name)),
         Span::call_site(),
@@ -107,7 +103,7 @@ fn dummy_const_trick<T: quote::ToTokens>(
     }
 }
 
-fn unraw(ident: &proc_macro2::Ident) -> String {
+fn unraw(ident: &Ident) -> String {
     ident.to_string().trim_start_matches("r#").to_owned()
 }
 
@@ -137,26 +133,51 @@ fn newtype_inner(data: &syn::Data) -> Option<syn::Type> {
     }
 }
 
-// If there as `num_traits` MetaNameValue attribute within the slice,
-// retrieve its value, and use it to create an `Ident` to be used to import
-// the `num_traits` crate.
-fn find_explicit_import_ident(attrs: &[syn::Attribute]) -> Option<syn::Ident> {
-    for attr in attrs {
-        if let Ok(syn::Meta::NameValue(mnv)) = attr.parse_meta() {
-            if mnv.path.is_ident("num_traits") {
-                match mnv.lit {
-                    syn::Lit::Str(lit_str) => {
-                        let import_str = &lit_str.value();
-                        let span = proc_macro2::Span::call_site();
-                        let import_ident = syn::Ident::new(import_str, span);
-                        return Some(import_ident);
+struct NumTraits {
+    import: Ident,
+    explicit: bool,
+}
+
+impl quote::ToTokens for NumTraits {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        self.import.to_tokens(tokens);
+    }
+}
+
+impl NumTraits {
+    fn new(ast: &syn::DeriveInput) -> Self {
+        // If there is a `num_traits` MetaNameValue attribute on the input,
+        // retrieve its value, and use it to create an `Ident` to be used
+        // to import the `num_traits` crate.
+        for attr in &ast.attrs {
+            if let Ok(syn::Meta::NameValue(mnv)) = attr.parse_meta() {
+                if mnv.path.is_ident("num_traits") {
+                    if let syn::Lit::Str(lit_str) = mnv.lit {
+                        return NumTraits {
+                            import: syn::Ident::new(&lit_str.value(), lit_str.span()),
+                            explicit: true,
+                        };
+                    } else {
+                        panic!("#[num_traits] attribute value must be a str");
                     }
-                    _ => panic!("#[num_traits] attribute value must be a str"),
                 }
             }
         }
+
+        // Otherwise, we'll implicitly import our own.
+        NumTraits {
+            import: Ident::new("_num_traits", Span::call_site()),
+            explicit: false,
+        }
     }
-    None
+
+    fn wrap(&self, trait_: &str, name: &Ident, output: TokenStream2) -> TokenStream2 {
+        if self.explicit {
+            output
+        } else {
+            dummy_const_trick(trait_, &name, output)
+        }
+    }
 }
 
 /// Derives [`num_traits::FromPrimitive`][from] for simple enums and newtypes.
@@ -212,13 +233,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
 
-    let explicit_import = find_explicit_import_ident(&ast.attrs);
-    let is_explicit_import = explicit_import.is_some();
-
-    let import = match explicit_import {
-        Some(ident) => ident,
-        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
-    };
+    let import = NumTraits::new(&ast);
 
     let impl_ = if let Some(inner_ty) = newtype_inner(&ast.data) {
         quote! {
@@ -320,11 +335,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         }
     };
 
-    if is_explicit_import {
-        impl_.into()
-    } else {
-        dummy_const_trick("FromPrimitive", &name, impl_).into()
-    }
+    import.wrap("FromPrimitive", &name, impl_).into()
 }
 
 /// Derives [`num_traits::ToPrimitive`][to] for simple enums and newtypes.
@@ -380,13 +391,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
 
-    let explicit_import = find_explicit_import_ident(&ast.attrs);
-    let is_explicit_import = explicit_import.is_some();
-
-    let import = match explicit_import {
-        Some(ident) => ident,
-        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
-    };
+    let import = NumTraits::new(&ast);
 
     let impl_ = if let Some(inner_ty) = newtype_inner(&ast.data) {
         quote! {
@@ -489,11 +494,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         }
     };
 
-    if is_explicit_import {
-        impl_.into()
-    } else {
-        dummy_const_trick("ToPrimitive", &name, impl_).into()
-    }
+    import.wrap("ToPrimitive", &name, impl_).into()
 }
 
 const NEWTYPE_ONLY: &str = "This trait can only be derived for newtypes";
@@ -560,13 +561,7 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
-    let explicit_import = find_explicit_import_ident(&ast.attrs);
-    let is_explicit_import = explicit_import.is_some();
-
-    let import = match explicit_import {
-        Some(ident) => ident,
-        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
-    };
+    let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
         impl #import::NumCast for #name {
@@ -576,11 +571,7 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
         }
     };
 
-    if is_explicit_import {
-        impl_.into()
-    } else {
-        dummy_const_trick("NumCast", &name, impl_).into()
-    }
+    import.wrap("NumCast", &name, impl_).into()
 }
 
 /// Derives [`num_traits::Zero`][zero] for newtypes.  The inner type must already implement `Zero`.
@@ -592,13 +583,7 @@ pub fn zero(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
-    let explicit_import = find_explicit_import_ident(&ast.attrs);
-    let is_explicit_import = explicit_import.is_some();
-
-    let import = match explicit_import {
-        Some(ident) => ident,
-        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
-    };
+    let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
         impl #import::Zero for #name {
@@ -611,11 +596,7 @@ pub fn zero(input: TokenStream) -> TokenStream {
         }
     };
 
-    if is_explicit_import {
-        impl_.into()
-    } else {
-        dummy_const_trick("Zero", &name, impl_).into()
-    }
+    import.wrap("Zero", &name, impl_).into()
 }
 
 /// Derives [`num_traits::One`][one] for newtypes.  The inner type must already implement `One`.
@@ -627,13 +608,7 @@ pub fn one(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
-    let explicit_import = find_explicit_import_ident(&ast.attrs);
-    let is_explicit_import = explicit_import.is_some();
-
-    let import = match explicit_import {
-        Some(ident) => ident,
-        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
-    };
+    let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
         impl #import::One for #name {
@@ -646,11 +621,7 @@ pub fn one(input: TokenStream) -> TokenStream {
         }
     };
 
-    if is_explicit_import {
-        impl_.into()
-    } else {
-        dummy_const_trick("One", &name, impl_).into()
-    }
+    import.wrap("One", &name, impl_).into()
 }
 
 /// Derives [`num_traits::Num`][num] for newtypes.  The inner type must already implement `Num`.
@@ -662,13 +633,7 @@ pub fn num(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
-    let explicit_import = find_explicit_import_ident(&ast.attrs);
-    let is_explicit_import = explicit_import.is_some();
-
-    let import = match explicit_import {
-        Some(ident) => ident,
-        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
-    };
+    let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
         impl #import::Num for #name {
@@ -679,11 +644,7 @@ pub fn num(input: TokenStream) -> TokenStream {
         }
     };
 
-    if is_explicit_import {
-        impl_.into()
-    } else {
-        dummy_const_trick("Num", &name, impl_).into()
-    }
+    import.wrap("Num", &name, impl_).into()
 }
 
 /// Derives [`num_traits::Float`][float] for newtypes.  The inner type must already implement
@@ -696,13 +657,7 @@ pub fn float(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
-    let explicit_import = find_explicit_import_ident(&ast.attrs);
-    let is_explicit_import = explicit_import.is_some();
-
-    let import = match explicit_import {
-        Some(ident) => ident,
-        None => syn::Ident::new("_num_traits", proc_macro2::Span::call_site()),
-    };
+    let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
         impl #import::Float for #name {
@@ -881,9 +836,5 @@ pub fn float(input: TokenStream) -> TokenStream {
         }
     };
 
-    if is_explicit_import {
-        impl_.into()
-    } else {
-        dummy_const_trick("Float", &name, impl_).into()
-    }
+    import.wrap("Float", &name, impl_).into()
 }
