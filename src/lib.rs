@@ -512,43 +512,39 @@ pub fn num_ops(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
-    dummy_const_trick(
-        "NumOps",
-        &name,
-        quote! {
-            impl ::std::ops::Add for #name {
-                type Output = Self;
-                fn add(self, other: Self) -> Self {
-                    #name(<#inner_ty as ::std::ops::Add>::add(self.0, other.0))
-                }
+    let impl_ = quote! {
+        impl ::std::ops::Add for #name {
+            type Output = Self;
+            fn add(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Add>::add(self.0, other.0))
             }
-            impl ::std::ops::Sub for #name {
-                type Output = Self;
-                fn sub(self, other: Self) -> Self {
-                    #name(<#inner_ty as ::std::ops::Sub>::sub(self.0, other.0))
-                }
+        }
+        impl ::std::ops::Sub for #name {
+            type Output = Self;
+            fn sub(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Sub>::sub(self.0, other.0))
             }
-            impl ::std::ops::Mul for #name {
-                type Output = Self;
-                fn mul(self, other: Self) -> Self {
-                    #name(<#inner_ty as ::std::ops::Mul>::mul(self.0, other.0))
-                }
+        }
+        impl ::std::ops::Mul for #name {
+            type Output = Self;
+            fn mul(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Mul>::mul(self.0, other.0))
             }
-            impl ::std::ops::Div for #name {
-                type Output = Self;
-                fn div(self, other: Self) -> Self {
-                    #name(<#inner_ty as ::std::ops::Div>::div(self.0, other.0))
-                }
+        }
+        impl ::std::ops::Div for #name {
+            type Output = Self;
+            fn div(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Div>::div(self.0, other.0))
             }
-            impl ::std::ops::Rem for #name {
-                type Output = Self;
-                fn rem(self, other: Self) -> Self {
-                    #name(<#inner_ty as ::std::ops::Rem>::rem(self.0, other.0))
-                }
+        }
+        impl ::std::ops::Rem for #name {
+            type Output = Self;
+            fn rem(self, other: Self) -> Self {
+                #name(<#inner_ty as ::std::ops::Rem>::rem(self.0, other.0))
             }
-        },
-    )
-    .into()
+        }
+    };
+    impl_.into()
 }
 
 /// Derives [`num_traits::NumCast`][num_cast] for newtypes.  The inner type must already implement
