@@ -70,6 +70,26 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Data, Fields, Ident};
 
+/// Try to parse the tokens, or else return a compilation error
+/// suggesting "full-syntax" if that's not already enabled.
+macro_rules! parse {
+    ($tokens:ident as $type:ty) => {
+        match syn::parse::<$type>($tokens) {
+            Ok(parsed) => parsed,
+            Err(mut error) => {
+                if cfg!(not(feature = "full-syntax")) {
+                    let hint = syn::Error::new(
+                        Span::call_site(),
+                        r#"this might need the "full-syntax" feature of `num-derive`"#,
+                    );
+                    error.combine(hint);
+                }
+                return TokenStream::from(error.to_compile_error());
+            }
+        }
+    };
+}
+
 // Within `exp`, you can bring things into scope with `extern crate`.
 //
 // We don't want to assume that `num_traits::` is in scope - the user may have imported it under a
@@ -230,7 +250,7 @@ impl NumTraits {
 /// ```
 #[proc_macro_derive(FromPrimitive, attributes(num_traits))]
 pub fn from_primitive(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
 
     let import = NumTraits::new(&ast);
@@ -388,7 +408,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_derive(ToPrimitive, attributes(num_traits))]
 pub fn to_primitive(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
 
     let import = NumTraits::new(&ast);
@@ -509,7 +529,7 @@ const NEWTYPE_ONLY: &str = "This trait can only be derived for newtypes";
 /// `Output=Self`.
 #[proc_macro_derive(NumOps)]
 pub fn num_ops(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
     let impl_ = quote! {
@@ -553,7 +573,7 @@ pub fn num_ops(input: TokenStream) -> TokenStream {
 /// [num_cast]: https://docs.rs/num-traits/0.2/num_traits/cast/trait.NumCast.html
 #[proc_macro_derive(NumCast, attributes(num_traits))]
 pub fn num_cast(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
@@ -575,7 +595,7 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
 /// [zero]: https://docs.rs/num-traits/0.2/num_traits/identities/trait.Zero.html
 #[proc_macro_derive(Zero, attributes(num_traits))]
 pub fn zero(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
@@ -600,7 +620,7 @@ pub fn zero(input: TokenStream) -> TokenStream {
 /// [one]: https://docs.rs/num-traits/0.2/num_traits/identities/trait.One.html
 #[proc_macro_derive(One, attributes(num_traits))]
 pub fn one(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
@@ -625,7 +645,7 @@ pub fn one(input: TokenStream) -> TokenStream {
 /// [num]: https://docs.rs/num-traits/0.2/num_traits/trait.Num.html
 #[proc_macro_derive(Num, attributes(num_traits))]
 pub fn num(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
@@ -649,7 +669,7 @@ pub fn num(input: TokenStream) -> TokenStream {
 /// [float]: https://docs.rs/num-traits/0.2/num_traits/float/trait.Float.html
 #[proc_macro_derive(Float, attributes(num_traits))]
 pub fn float(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
@@ -834,3 +854,5 @@ pub fn float(input: TokenStream) -> TokenStream {
 
     import.wrap("Float", &name, impl_).into()
 }
+
+mod test;
