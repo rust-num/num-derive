@@ -1,7 +1,9 @@
 # Release 0.3.1 (2020-07-28)
 
+- [Add `num_traits` proc_macro helper for explicit import][35] - thanks @jean-airoldie!
 - [Provide nicer parse errors and suggest "full-syntax"][39]
 
+[35]: https://github.com/rust-num/num-derive/pull/35
 [39]: https://github.com/rust-num/num-derive/pull/39
 
 # Release 0.3.0 (2019-09-27)
