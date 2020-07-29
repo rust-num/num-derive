@@ -252,12 +252,13 @@ impl NumTraits {
 pub fn from_primitive(input: TokenStream) -> TokenStream {
     let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
+    let (impl_, type_, where_) = split_for_impl(&ast.generics);
 
     let import = NumTraits::new(&ast);
 
     let impl_ = if let Some(inner_ty) = newtype_inner(&ast.data) {
         quote! {
-            impl #import::FromPrimitive for #name {
+            impl #impl_ #import::FromPrimitive for #name #type_ #where_ #inner_ty: #import::FromPrimitive {
                 fn from_i64(n: i64) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i64(n).map(#name)
                 }
@@ -340,7 +341,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         };
 
         quote! {
-            impl #import::FromPrimitive for #name {
+            impl #impl_ #import::FromPrimitive for #name #type_ #where_ {
                 #[allow(trivial_numeric_casts)]
                 fn from_i64(#from_i64_var: i64) -> Option<Self> {
                     #(#clauses else)* {
@@ -410,12 +411,13 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 pub fn to_primitive(input: TokenStream) -> TokenStream {
     let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
+    let (impl_, type_, where_) = split_for_impl(&ast.generics);
 
     let import = NumTraits::new(&ast);
 
     let impl_ = if let Some(inner_ty) = newtype_inner(&ast.data) {
         quote! {
-            impl #import::ToPrimitive for #name {
+            impl #impl_ #import::ToPrimitive for #name #type_ #where_ #inner_ty: #import::ToPrimitive {
                 fn to_i64(&self) -> Option<i64> {
                     <#inner_ty as #import::ToPrimitive>::to_i64(&self.0)
                 }
@@ -501,7 +503,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         };
 
         quote! {
-            impl #import::ToPrimitive for #name {
+            impl #impl_ #import::ToPrimitive for #name #type_ #where_ {
                 #[allow(trivial_numeric_casts)]
                 fn to_i64(&self) -> Option<i64> {
                     #match_expr
@@ -531,33 +533,34 @@ const NEWTYPE_ONLY: &str = "This trait can only be derived for newtypes";
 pub fn num_ops(input: TokenStream) -> TokenStream {
     let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
+    let (impl_, type_, where_) = split_for_impl(&ast.generics);
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
     let impl_ = quote! {
-        impl ::std::ops::Add for #name {
+        impl #impl_ ::std::ops::Add for #name #type_ #where_ #inner_ty: ::std::ops::Add<Output = #inner_ty> {
             type Output = Self;
             fn add(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Add>::add(self.0, other.0))
             }
         }
-        impl ::std::ops::Sub for #name {
+        impl #impl_ ::std::ops::Sub for #name #type_ #where_ #inner_ty: ::std::ops::Sub<Output = #inner_ty> {
             type Output = Self;
             fn sub(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Sub>::sub(self.0, other.0))
             }
         }
-        impl ::std::ops::Mul for #name {
+        impl #impl_ ::std::ops::Mul for #name #type_ #where_ #inner_ty: ::std::ops::Mul<Output = #inner_ty> {
             type Output = Self;
             fn mul(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Mul>::mul(self.0, other.0))
             }
         }
-        impl ::std::ops::Div for #name {
+        impl #impl_ ::std::ops::Div for #name #type_ #where_ #inner_ty: ::std::ops::Div<Output = #inner_ty> {
             type Output = Self;
             fn div(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Div>::div(self.0, other.0))
             }
         }
-        impl ::std::ops::Rem for #name {
+        impl #impl_ ::std::ops::Rem for #name #type_ #where_ #inner_ty: ::std::ops::Rem<Output = #inner_ty> {
             type Output = Self;
             fn rem(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Rem>::rem(self.0, other.0))
@@ -575,13 +578,16 @@ pub fn num_ops(input: TokenStream) -> TokenStream {
 pub fn num_cast(input: TokenStream) -> TokenStream {
     let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
+    let (impl_, type_, where_) = split_for_impl(&ast.generics);
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+    let fn_param = proc_macro2::Ident::new("FROM_T", name.span());
 
     let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
-        impl #import::NumCast for #name {
-            fn from<T: #import::ToPrimitive>(n: T) -> Option<Self> {
+        impl #impl_ #import::NumCast for #name #type_ #where_ #inner_ty: #import::NumCast {
+            #[allow(non_camel_case_types)]
+            fn from<#fn_param: #import::ToPrimitive>(n: #fn_param) -> Option<Self> {
                 <#inner_ty as #import::NumCast>::from(n).map(#name)
             }
         }
@@ -597,12 +603,13 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
 pub fn zero(input: TokenStream) -> TokenStream {
     let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
+    let (impl_, type_, where_) = split_for_impl(&ast.generics);
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
     let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
-        impl #import::Zero for #name {
+        impl #impl_ #import::Zero for #name #type_ #where_ #inner_ty: #import::Zero {
             fn zero() -> Self {
                 #name(<#inner_ty as #import::Zero>::zero())
             }
@@ -622,12 +629,13 @@ pub fn zero(input: TokenStream) -> TokenStream {
 pub fn one(input: TokenStream) -> TokenStream {
     let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
+    let (impl_, type_, where_) = split_for_impl(&ast.generics);
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
     let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
-        impl #import::One for #name {
+        impl #impl_ #import::One for #name #type_ #where_ #inner_ty: #import::One + PartialEq {
             fn one() -> Self {
                 #name(<#inner_ty as #import::One>::one())
             }
@@ -640,6 +648,17 @@ pub fn one(input: TokenStream) -> TokenStream {
     import.wrap("One", &name, impl_).into()
 }
 
+fn split_for_impl(
+    generics: &syn::Generics,
+) -> (syn::ImplGenerics, syn::TypeGenerics, impl quote::ToTokens) {
+    let (impl_, type_, where_) = generics.split_for_impl();
+    let where_ = match where_ {
+        Some(where_) => quote! { #where_, },
+        None => quote! { where },
+    };
+    (impl_, type_, where_)
+}
+
 /// Derives [`num_traits::Num`][num] for newtypes.  The inner type must already implement `Num`.
 ///
 /// [num]: https://docs.rs/num-traits/0.2/num_traits/trait.Num.html
@@ -647,12 +666,13 @@ pub fn one(input: TokenStream) -> TokenStream {
 pub fn num(input: TokenStream) -> TokenStream {
     let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
+    let (impl_, type_, where_) = split_for_impl(&ast.generics);
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
     let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
-        impl #import::Num for #name {
+        impl #impl_ #import::Num for #name #type_ #where_ #inner_ty: #import::Num {
             type FromStrRadixErr = <#inner_ty as #import::Num>::FromStrRadixErr;
             fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
                 <#inner_ty as #import::Num>::from_str_radix(s, radix).map(#name)
@@ -671,12 +691,13 @@ pub fn num(input: TokenStream) -> TokenStream {
 pub fn float(input: TokenStream) -> TokenStream {
     let ast = parse!(input as syn::DeriveInput);
     let name = &ast.ident;
+    let (impl_, type_, where_) = split_for_impl(&ast.generics);
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
 
     let import = NumTraits::new(&ast);
 
     let impl_ = quote! {
-        impl #import::Float for #name {
+        impl #impl_ #import::Float for #name #type_ #where_ #inner_ty: #import::Float {
             fn nan() -> Self {
                 #name(<#inner_ty as #import::Float>::nan())
             }
