@@ -258,45 +258,59 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
     let impl_ = if let Some(inner_ty) = newtype_inner(&ast.data) {
         quote! {
             impl #import::FromPrimitive for #name {
+                #[inline]
                 fn from_i64(n: i64) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i64(n).map(#name)
                 }
+                #[inline]
                 fn from_u64(n: u64) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u64(n).map(#name)
                 }
+                #[inline]
                 fn from_isize(n: isize) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_isize(n).map(#name)
                 }
+                #[inline]
                 fn from_i8(n: i8) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i8(n).map(#name)
                 }
+                #[inline]
                 fn from_i16(n: i16) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i16(n).map(#name)
                 }
+                #[inline]
                 fn from_i32(n: i32) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i32(n).map(#name)
                 }
+                #[inline]
                 fn from_i128(n: i128) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i128(n).map(#name)
                 }
+                #[inline]
                 fn from_usize(n: usize) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_usize(n).map(#name)
                 }
+                #[inline]
                 fn from_u8(n: u8) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u8(n).map(#name)
                 }
+                #[inline]
                 fn from_u16(n: u16) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u16(n).map(#name)
                 }
+                #[inline]
                 fn from_u32(n: u32) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u32(n).map(#name)
                 }
+                #[inline]
                 fn from_u128(n: u128) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u128(n).map(#name)
                 }
+                #[inline]
                 fn from_f32(n: f32) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_f32(n).map(#name)
                 }
+                #[inline]
                 fn from_f64(n: f64) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_f64(n).map(#name)
                 }
@@ -342,12 +356,14 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         quote! {
             impl #import::FromPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
+                #[inline]
                 fn from_i64(#from_i64_var: i64) -> Option<Self> {
                     #(#clauses else)* {
                         None
                     }
                 }
 
+                #[inline]
                 fn from_u64(n: u64) -> Option<Self> {
                     Self::from_i64(n as i64)
                 }
@@ -416,45 +432,59 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
     let impl_ = if let Some(inner_ty) = newtype_inner(&ast.data) {
         quote! {
             impl #import::ToPrimitive for #name {
+                #[inline]
                 fn to_i64(&self) -> Option<i64> {
                     <#inner_ty as #import::ToPrimitive>::to_i64(&self.0)
                 }
+                #[inline]
                 fn to_u64(&self) -> Option<u64> {
                     <#inner_ty as #import::ToPrimitive>::to_u64(&self.0)
                 }
+                #[inline]
                 fn to_isize(&self) -> Option<isize> {
                     <#inner_ty as #import::ToPrimitive>::to_isize(&self.0)
                 }
+                #[inline]
                 fn to_i8(&self) -> Option<i8> {
                     <#inner_ty as #import::ToPrimitive>::to_i8(&self.0)
                 }
+                #[inline]
                 fn to_i16(&self) -> Option<i16> {
                     <#inner_ty as #import::ToPrimitive>::to_i16(&self.0)
                 }
+                #[inline]
                 fn to_i32(&self) -> Option<i32> {
                     <#inner_ty as #import::ToPrimitive>::to_i32(&self.0)
                 }
+                #[inline]
                 fn to_i128(&self) -> Option<i128> {
                     <#inner_ty as #import::ToPrimitive>::to_i128(&self.0)
                 }
+                #[inline]
                 fn to_usize(&self) -> Option<usize> {
                     <#inner_ty as #import::ToPrimitive>::to_usize(&self.0)
                 }
+                #[inline]
                 fn to_u8(&self) -> Option<u8> {
                     <#inner_ty as #import::ToPrimitive>::to_u8(&self.0)
                 }
+                #[inline]
                 fn to_u16(&self) -> Option<u16> {
                     <#inner_ty as #import::ToPrimitive>::to_u16(&self.0)
                 }
+                #[inline]
                 fn to_u32(&self) -> Option<u32> {
                     <#inner_ty as #import::ToPrimitive>::to_u32(&self.0)
                 }
+                #[inline]
                 fn to_u128(&self) -> Option<u128> {
                     <#inner_ty as #import::ToPrimitive>::to_u128(&self.0)
                 }
+                #[inline]
                 fn to_f32(&self) -> Option<f32> {
                     <#inner_ty as #import::ToPrimitive>::to_f32(&self.0)
                 }
+                #[inline]
                 fn to_f64(&self) -> Option<f64> {
                     <#inner_ty as #import::ToPrimitive>::to_f64(&self.0)
                 }
@@ -502,11 +532,13 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
 
         quote! {
             impl #import::ToPrimitive for #name {
+                #[inline]
                 #[allow(trivial_numeric_casts)]
                 fn to_i64(&self) -> Option<i64> {
                     #match_expr
                 }
 
+                #[inline]
                 fn to_u64(&self) -> Option<u64> {
                     self.to_i64().map(|x| x as u64)
                 }
@@ -535,30 +567,35 @@ pub fn num_ops(input: TokenStream) -> TokenStream {
     let impl_ = quote! {
         impl ::std::ops::Add for #name {
             type Output = Self;
+            #[inline]
             fn add(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Add>::add(self.0, other.0))
             }
         }
         impl ::std::ops::Sub for #name {
             type Output = Self;
+            #[inline]
             fn sub(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Sub>::sub(self.0, other.0))
             }
         }
         impl ::std::ops::Mul for #name {
             type Output = Self;
+            #[inline]
             fn mul(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Mul>::mul(self.0, other.0))
             }
         }
         impl ::std::ops::Div for #name {
             type Output = Self;
+            #[inline]
             fn div(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Div>::div(self.0, other.0))
             }
         }
         impl ::std::ops::Rem for #name {
             type Output = Self;
+            #[inline]
             fn rem(self, other: Self) -> Self {
                 #name(<#inner_ty as ::std::ops::Rem>::rem(self.0, other.0))
             }
@@ -581,6 +618,7 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
 
     let impl_ = quote! {
         impl #import::NumCast for #name {
+            #[inline]
             fn from<T: #import::ToPrimitive>(n: T) -> Option<Self> {
                 <#inner_ty as #import::NumCast>::from(n).map(#name)
             }
@@ -603,9 +641,11 @@ pub fn zero(input: TokenStream) -> TokenStream {
 
     let impl_ = quote! {
         impl #import::Zero for #name {
+            #[inline]
             fn zero() -> Self {
                 #name(<#inner_ty as #import::Zero>::zero())
             }
+            #[inline]
             fn is_zero(&self) -> bool {
                 <#inner_ty as #import::Zero>::is_zero(&self.0)
             }
@@ -628,9 +668,11 @@ pub fn one(input: TokenStream) -> TokenStream {
 
     let impl_ = quote! {
         impl #import::One for #name {
+            #[inline]
             fn one() -> Self {
                 #name(<#inner_ty as #import::One>::one())
             }
+            #[inline]
             fn is_one(&self) -> bool {
                 <#inner_ty as #import::One>::is_one(&self.0)
             }
@@ -654,6 +696,7 @@ pub fn num(input: TokenStream) -> TokenStream {
     let impl_ = quote! {
         impl #import::Num for #name {
             type FromStrRadixErr = <#inner_ty as #import::Num>::FromStrRadixErr;
+            #[inline]
             fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
                 <#inner_ty as #import::Num>::from_str_radix(s, radix).map(#name)
             }
@@ -677,175 +720,232 @@ pub fn float(input: TokenStream) -> TokenStream {
 
     let impl_ = quote! {
         impl #import::Float for #name {
+            #[inline]
             fn nan() -> Self {
                 #name(<#inner_ty as #import::Float>::nan())
             }
+            #[inline]
             fn infinity() -> Self {
                 #name(<#inner_ty as #import::Float>::infinity())
             }
+            #[inline]
             fn neg_infinity() -> Self {
                 #name(<#inner_ty as #import::Float>::neg_infinity())
             }
+            #[inline]
             fn neg_zero() -> Self {
                 #name(<#inner_ty as #import::Float>::neg_zero())
             }
+            #[inline]
             fn min_value() -> Self {
                 #name(<#inner_ty as #import::Float>::min_value())
             }
+            #[inline]
             fn min_positive_value() -> Self {
                 #name(<#inner_ty as #import::Float>::min_positive_value())
             }
+            #[inline]
             fn max_value() -> Self {
                 #name(<#inner_ty as #import::Float>::max_value())
             }
+            #[inline]
             fn is_nan(self) -> bool {
                 <#inner_ty as #import::Float>::is_nan(self.0)
             }
+            #[inline]
             fn is_infinite(self) -> bool {
                 <#inner_ty as #import::Float>::is_infinite(self.0)
             }
+            #[inline]
             fn is_finite(self) -> bool {
                 <#inner_ty as #import::Float>::is_finite(self.0)
             }
+            #[inline]
             fn is_normal(self) -> bool {
                 <#inner_ty as #import::Float>::is_normal(self.0)
             }
+            #[inline]
             fn classify(self) -> ::std::num::FpCategory {
                 <#inner_ty as #import::Float>::classify(self.0)
             }
+            #[inline]
             fn floor(self) -> Self {
                 #name(<#inner_ty as #import::Float>::floor(self.0))
             }
+            #[inline]
             fn ceil(self) -> Self {
                 #name(<#inner_ty as #import::Float>::ceil(self.0))
             }
+            #[inline]
             fn round(self) -> Self {
                 #name(<#inner_ty as #import::Float>::round(self.0))
             }
+            #[inline]
             fn trunc(self) -> Self {
                 #name(<#inner_ty as #import::Float>::trunc(self.0))
             }
+            #[inline]
             fn fract(self) -> Self {
                 #name(<#inner_ty as #import::Float>::fract(self.0))
             }
+            #[inline]
             fn abs(self) -> Self {
                 #name(<#inner_ty as #import::Float>::abs(self.0))
             }
+            #[inline]
             fn signum(self) -> Self {
                 #name(<#inner_ty as #import::Float>::signum(self.0))
             }
+            #[inline]
             fn is_sign_positive(self) -> bool {
                 <#inner_ty as #import::Float>::is_sign_positive(self.0)
             }
+            #[inline]
             fn is_sign_negative(self) -> bool {
                 <#inner_ty as #import::Float>::is_sign_negative(self.0)
             }
+            #[inline]
             fn mul_add(self, a: Self, b: Self) -> Self {
                 #name(<#inner_ty as #import::Float>::mul_add(self.0, a.0, b.0))
             }
+            #[inline]
             fn recip(self) -> Self {
                 #name(<#inner_ty as #import::Float>::recip(self.0))
             }
+            #[inline]
             fn powi(self, n: i32) -> Self {
                 #name(<#inner_ty as #import::Float>::powi(self.0, n))
             }
+            #[inline]
             fn powf(self, n: Self) -> Self {
                 #name(<#inner_ty as #import::Float>::powf(self.0, n.0))
             }
+            #[inline]
             fn sqrt(self) -> Self {
                 #name(<#inner_ty as #import::Float>::sqrt(self.0))
             }
+            #[inline]
             fn exp(self) -> Self {
                 #name(<#inner_ty as #import::Float>::exp(self.0))
             }
+            #[inline]
             fn exp2(self) -> Self {
                 #name(<#inner_ty as #import::Float>::exp2(self.0))
             }
+            #[inline]
             fn ln(self) -> Self {
                 #name(<#inner_ty as #import::Float>::ln(self.0))
             }
+            #[inline]
             fn log(self, base: Self) -> Self {
                 #name(<#inner_ty as #import::Float>::log(self.0, base.0))
             }
+            #[inline]
             fn log2(self) -> Self {
                 #name(<#inner_ty as #import::Float>::log2(self.0))
             }
+            #[inline]
             fn log10(self) -> Self {
                 #name(<#inner_ty as #import::Float>::log10(self.0))
             }
+            #[inline]
             fn max(self, other: Self) -> Self {
                 #name(<#inner_ty as #import::Float>::max(self.0, other.0))
             }
+            #[inline]
             fn min(self, other: Self) -> Self {
                 #name(<#inner_ty as #import::Float>::min(self.0, other.0))
             }
+            #[inline]
             fn abs_sub(self, other: Self) -> Self {
                 #name(<#inner_ty as #import::Float>::abs_sub(self.0, other.0))
             }
+            #[inline]
             fn cbrt(self) -> Self {
                 #name(<#inner_ty as #import::Float>::cbrt(self.0))
             }
+            #[inline]
             fn hypot(self, other: Self) -> Self {
                 #name(<#inner_ty as #import::Float>::hypot(self.0, other.0))
             }
+            #[inline]
             fn sin(self) -> Self {
                 #name(<#inner_ty as #import::Float>::sin(self.0))
             }
+            #[inline]
             fn cos(self) -> Self {
                 #name(<#inner_ty as #import::Float>::cos(self.0))
             }
+            #[inline]
             fn tan(self) -> Self {
                 #name(<#inner_ty as #import::Float>::tan(self.0))
             }
+            #[inline]
             fn asin(self) -> Self {
                 #name(<#inner_ty as #import::Float>::asin(self.0))
             }
+            #[inline]
             fn acos(self) -> Self {
                 #name(<#inner_ty as #import::Float>::acos(self.0))
             }
+            #[inline]
             fn atan(self) -> Self {
                 #name(<#inner_ty as #import::Float>::atan(self.0))
             }
+            #[inline]
             fn atan2(self, other: Self) -> Self {
                 #name(<#inner_ty as #import::Float>::atan2(self.0, other.0))
             }
+            #[inline]
             fn sin_cos(self) -> (Self, Self) {
                 let (x, y) = <#inner_ty as #import::Float>::sin_cos(self.0);
                 (#name(x), #name(y))
             }
+            #[inline]
             fn exp_m1(self) -> Self {
                 #name(<#inner_ty as #import::Float>::exp_m1(self.0))
             }
+            #[inline]
             fn ln_1p(self) -> Self {
                 #name(<#inner_ty as #import::Float>::ln_1p(self.0))
             }
+            #[inline]
             fn sinh(self) -> Self {
                 #name(<#inner_ty as #import::Float>::sinh(self.0))
             }
+            #[inline]
             fn cosh(self) -> Self {
                 #name(<#inner_ty as #import::Float>::cosh(self.0))
             }
+            #[inline]
             fn tanh(self) -> Self {
                 #name(<#inner_ty as #import::Float>::tanh(self.0))
             }
+            #[inline]
             fn asinh(self) -> Self {
                 #name(<#inner_ty as #import::Float>::asinh(self.0))
             }
+            #[inline]
             fn acosh(self) -> Self {
                 #name(<#inner_ty as #import::Float>::acosh(self.0))
             }
+            #[inline]
             fn atanh(self) -> Self {
                 #name(<#inner_ty as #import::Float>::atanh(self.0))
             }
+            #[inline]
             fn integer_decode(self) -> (u64, i16, i8) {
                 <#inner_ty as #import::Float>::integer_decode(self.0)
             }
+            #[inline]
             fn epsilon() -> Self {
                 #name(<#inner_ty as #import::Float>::epsilon())
             }
+            #[inline]
             fn to_degrees(self) -> Self {
                 #name(<#inner_ty as #import::Float>::to_degrees(self.0))
             }
+            #[inline]
             fn to_radians(self) -> Self {
                 #name(<#inner_ty as #import::Float>::to_radians(self.0))
             }
