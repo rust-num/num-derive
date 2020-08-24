@@ -1,3 +1,9 @@
+# Release 0.3.2 (2020-08-24)
+
+- [Add `#[inline]` to all derived functions][40] -- thanks @Amanieu!
+
+[40]: https://github.com/rust-num/num-derive/pull/40
+
 # Release 0.3.1 (2020-07-28)
 
 - [Add `num_traits` proc_macro helper for explicit import][35] - thanks @jean-airoldie!
