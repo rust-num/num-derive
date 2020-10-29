@@ -1,3 +1,9 @@
+# Release 0.3.3 (2020-10-29)
+
+- [Make `NumOps` work with `no_std`][41] -- thanks @jedrzejboczar!
+
+[41]: https://github.com/rust-num/num-derive/pull/41
+
 # Release 0.3.2 (2020-08-24)
 
 - [Add `#[inline]` to all derived functions][40] -- thanks @Amanieu!
