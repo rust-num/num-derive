@@ -565,39 +565,39 @@ pub fn num_ops(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
     let impl_ = quote! {
-        impl ::std::ops::Add for #name {
+        impl ::core::ops::Add for #name {
             type Output = Self;
             #[inline]
             fn add(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Add>::add(self.0, other.0))
+                #name(<#inner_ty as ::core::ops::Add>::add(self.0, other.0))
             }
         }
-        impl ::std::ops::Sub for #name {
+        impl ::core::ops::Sub for #name {
             type Output = Self;
             #[inline]
             fn sub(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Sub>::sub(self.0, other.0))
+                #name(<#inner_ty as ::core::ops::Sub>::sub(self.0, other.0))
             }
         }
-        impl ::std::ops::Mul for #name {
+        impl ::core::ops::Mul for #name {
             type Output = Self;
             #[inline]
             fn mul(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Mul>::mul(self.0, other.0))
+                #name(<#inner_ty as ::core::ops::Mul>::mul(self.0, other.0))
             }
         }
-        impl ::std::ops::Div for #name {
+        impl ::core::ops::Div for #name {
             type Output = Self;
             #[inline]
             fn div(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Div>::div(self.0, other.0))
+                #name(<#inner_ty as ::core::ops::Div>::div(self.0, other.0))
             }
         }
-        impl ::std::ops::Rem for #name {
+        impl ::core::ops::Rem for #name {
             type Output = Self;
             #[inline]
             fn rem(self, other: Self) -> Self {
-                #name(<#inner_ty as ::std::ops::Rem>::rem(self.0, other.0))
+                #name(<#inner_ty as ::core::ops::Rem>::rem(self.0, other.0))
             }
         }
     };
