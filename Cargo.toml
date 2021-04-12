@@ -30,6 +30,9 @@ name = "num_derive"
 proc-macro = true
 test = false
 
+[build-dependencies]
+autocfg = "1"
+
 # Most of the tests are left implicily detected, compiled for Rust 2018,
 # but let's try a few of them with the old 2015 edition too.
 
