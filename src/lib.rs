@@ -283,6 +283,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
                     <#inner_ty as #import::FromPrimitive>::from_i32(n).map(#name)
                 }
                 #[inline]
+                #[cfg(has_i128)]
                 fn from_i128(n: i128) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i128(n).map(#name)
                 }
@@ -303,6 +304,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
                     <#inner_ty as #import::FromPrimitive>::from_u32(n).map(#name)
                 }
                 #[inline]
+                #[cfg(has_i128)]
                 fn from_u128(n: u128) -> Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u128(n).map(#name)
                 }
@@ -457,6 +459,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
                     <#inner_ty as #import::ToPrimitive>::to_i32(&self.0)
                 }
                 #[inline]
+                #[cfg(has_i128)]
                 fn to_i128(&self) -> Option<i128> {
                     <#inner_ty as #import::ToPrimitive>::to_i128(&self.0)
                 }
@@ -477,6 +480,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
                     <#inner_ty as #import::ToPrimitive>::to_u32(&self.0)
                 }
                 #[inline]
+                #[cfg(has_i128)]
                 fn to_u128(&self) -> Option<u128> {
                     <#inner_ty as #import::ToPrimitive>::to_u128(&self.0)
                 }
