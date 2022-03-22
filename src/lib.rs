@@ -765,7 +765,7 @@ pub fn float(input: TokenStream) -> TokenStream {
                 <#inner_ty as #import::Float>::is_normal(self.0)
             }
             #[inline]
-            fn classify(self) -> ::std::num::FpCategory {
+            fn classify(self) -> ::core::num::FpCategory {
                 <#inner_ty as #import::Float>::classify(self.0)
             }
             #[inline]
