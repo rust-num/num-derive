@@ -195,7 +195,7 @@ impl NumTraits {
         if self.explicit {
             output
         } else {
-            dummy_const_trick(trait_, &name, output)
+            dummy_const_trick(trait_, name, output)
         }
     }
 }
@@ -371,7 +371,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         }
     };
 
-    import.wrap("FromPrimitive", &name, impl_).into()
+    import.wrap("FromPrimitive", name, impl_).into()
 }
 
 /// Derives [`num_traits::ToPrimitive`][to] for simple enums and newtypes.
@@ -546,7 +546,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         }
     };
 
-    import.wrap("ToPrimitive", &name, impl_).into()
+    import.wrap("ToPrimitive", name, impl_).into()
 }
 
 const NEWTYPE_ONLY: &str = "This trait can only be derived for newtypes";
@@ -625,7 +625,7 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
         }
     };
 
-    import.wrap("NumCast", &name, impl_).into()
+    import.wrap("NumCast", name, impl_).into()
 }
 
 /// Derives [`num_traits::Zero`][zero] for newtypes.  The inner type must already implement `Zero`.
@@ -652,7 +652,7 @@ pub fn zero(input: TokenStream) -> TokenStream {
         }
     };
 
-    import.wrap("Zero", &name, impl_).into()
+    import.wrap("Zero", name, impl_).into()
 }
 
 /// Derives [`num_traits::One`][one] for newtypes.  The inner type must already implement `One`.
@@ -679,7 +679,7 @@ pub fn one(input: TokenStream) -> TokenStream {
         }
     };
 
-    import.wrap("One", &name, impl_).into()
+    import.wrap("One", name, impl_).into()
 }
 
 /// Derives [`num_traits::Num`][num] for newtypes.  The inner type must already implement `Num`.
@@ -703,7 +703,7 @@ pub fn num(input: TokenStream) -> TokenStream {
         }
     };
 
-    import.wrap("Num", &name, impl_).into()
+    import.wrap("Num", name, impl_).into()
 }
 
 /// Derives [`num_traits::Float`][float] for newtypes.  The inner type must already implement
@@ -952,7 +952,7 @@ pub fn float(input: TokenStream) -> TokenStream {
         }
     };
 
-    import.wrap("Float", &name, impl_).into()
+    import.wrap("Float", name, impl_).into()
 }
 
 mod test;
