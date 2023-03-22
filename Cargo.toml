@@ -16,7 +16,7 @@ edition = "2018"
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = "1"
+syn = "2"
 
 [dev-dependencies]
 num = "0.3"
