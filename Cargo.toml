@@ -22,9 +22,6 @@ syn = "2"
 num = "0.3"
 num-traits = "0.2"
 
-[features]
-full-syntax = ["syn/full"]
-
 [lib]
 name = "num_derive"
 proc-macro = true
