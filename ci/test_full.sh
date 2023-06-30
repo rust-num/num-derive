@@ -3,7 +3,7 @@
 set -e
 
 CRATE=num-derive
-MSRV=1.31
+MSRV=1.56
 
 get_rust_version() {
   local array=($(rustc --version));

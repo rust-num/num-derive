@@ -12,6 +12,7 @@ version = "0.3.3"
 readme = "README.md"
 exclude = ["/bors.toml", "/ci/*", "/.github/*"]
 edition = "2018"
+rust-version = "1.56.0"
 
 [dependencies]
 proc-macro2 = "1"
