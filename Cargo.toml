@@ -8,35 +8,41 @@ categories = [ "science" ]
 license = "MIT OR Apache-2.0"
 name = "num-derive"
 repository = "https://github.com/rust-num/num-derive"
-version = "0.3.3"
+version = "0.4.0"
 readme = "README.md"
 exclude = ["/bors.toml", "/ci/*", "/.github/*"]
-edition = "2018"
+edition = "2021"
+rust-version = "1.56.0"
 
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = "1"
+syn = "2.0.5"
 
 [dev-dependencies]
-num = "0.3"
+num = "0.4"
 num-traits = "0.2"
-
-[features]
-full-syntax = ["syn/full"]
 
 [lib]
 name = "num_derive"
 proc-macro = true
 test = false
 
-# Most of the tests are left implicily detected, compiled for Rust 2018,
-# but let's try a few of them with the old 2015 edition too.
+# Most of the tests are left implicily detected, compiled for Rust 2021,
+# but let's try a few of them with the older editions too.
 
 [[test]]
 name = "newtype-2015"
 edition = "2015"
 
 [[test]]
+name = "newtype-2018"
+edition = "2018"
+
+[[test]]
 name = "trivial-2015"
 edition = "2015"
+
+[[test]]
+name = "trivial-2018"
+edition = "2018"

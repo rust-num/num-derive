@@ -3,7 +3,7 @@
 set -e
 
 CRATE=num-derive
-MSRV=1.31
+MSRV=1.56
 
 get_rust_version() {
   local array=($(rustc --version));
@@ -27,7 +27,7 @@ if ! check_version $MSRV ; then
   exit 1
 fi
 
-FEATURES=(full-syntax)
+FEATURES=()
 echo "Testing supported features: ${FEATURES[*]}"
 
 set -x

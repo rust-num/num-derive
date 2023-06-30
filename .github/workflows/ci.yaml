@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [1.31.0, stable, beta, nightly]
+        rust: [1.56.0, stable, beta, nightly]
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@1.62.0
+      - uses: dtolnay/rust-toolchain@1.70.0
         with:
           components: rustfmt
       - run: cargo fmt --all --check
