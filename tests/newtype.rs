@@ -2,7 +2,7 @@ extern crate num as num_renamed;
 #[macro_use]
 extern crate num_derive;
 
-use crate::num_renamed::{Float, FromPrimitive, Num, NumCast, One, ToPrimitive, Zero};
+use crate::num_renamed::{Float, FromPrimitive, Num, NumCast, One, Signed, ToPrimitive, Zero};
 use std::ops::Neg;
 
 #[derive(
@@ -19,6 +19,7 @@ use std::ops::Neg;
     Zero,
     Num,
     Float,
+    Signed,
 )]
 struct MyFloat(f64);
 
@@ -86,4 +87,9 @@ fn test_num() {
 #[test]
 fn test_float() {
     assert_eq!(MyFloat(4.0).log(MyFloat(2.0)), MyFloat(2.0));
+}
+
+#[test]
+fn test_signed() {
+    assert_eq!(MyFloat(-2.0).is_negative(), true)
 }

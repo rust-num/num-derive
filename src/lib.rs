@@ -952,3 +952,43 @@ pub fn float(input: TokenStream) -> TokenStream {
 
     import.wrap("Float", &name, impl_).into()
 }
+
+/// Derives [`num_traits::Signed`][signed] for newtypes.  The inner type must already implement
+/// `Signed`.
+///
+/// [signed]: https://docs.rs/num-traits/0.2/num_traits/sign/trait.Signed.html
+#[proc_macro_derive(Signed, attributes(num_traits))]
+pub fn signed(input: TokenStream) -> TokenStream {
+    let ast = parse!(input as syn::DeriveInput);
+    let name = &ast.ident;
+    let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+
+    let import = NumTraits::new(&ast);
+
+    let impl_ = quote! {
+        impl #import::Signed for #name {
+            #[inline]
+            fn abs(&self) -> Self {
+                #name(<#inner_ty as #import::Signed>::abs(&self.0))
+            }
+            #[inline]
+            fn abs_sub(&self, other: &Self) -> Self {
+                #name(<#inner_ty as #import::Signed>::abs_sub(&self.0, &other.0))
+            }
+            #[inline]
+            fn signum(&self) -> Self {
+                #name(<#inner_ty as #import::Signed>::signum(&self.0))
+            }
+            #[inline]
+            fn is_positive(&self) -> bool {
+                <#inner_ty as #import::Signed>::is_positive(&self.0)
+            }
+            #[inline]
+            fn is_negative(&self) -> bool {
+                <#inner_ty as #import::Signed>::is_negative(&self.0)
+            }
+        }
+    };
+
+    import.wrap("Signed", &name, impl_).into()
+}
