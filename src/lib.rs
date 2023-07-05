@@ -257,59 +257,59 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
         quote! {
             impl #import::FromPrimitive for #name {
                 #[inline]
-                fn from_i64(n: i64) -> Option<Self> {
+                fn from_i64(n: i64) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i64(n).map(#name)
                 }
                 #[inline]
-                fn from_u64(n: u64) -> Option<Self> {
+                fn from_u64(n: u64) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u64(n).map(#name)
                 }
                 #[inline]
-                fn from_isize(n: isize) -> Option<Self> {
+                fn from_isize(n: isize) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_isize(n).map(#name)
                 }
                 #[inline]
-                fn from_i8(n: i8) -> Option<Self> {
+                fn from_i8(n: i8) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i8(n).map(#name)
                 }
                 #[inline]
-                fn from_i16(n: i16) -> Option<Self> {
+                fn from_i16(n: i16) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i16(n).map(#name)
                 }
                 #[inline]
-                fn from_i32(n: i32) -> Option<Self> {
+                fn from_i32(n: i32) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i32(n).map(#name)
                 }
                 #[inline]
-                fn from_i128(n: i128) -> Option<Self> {
+                fn from_i128(n: i128) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_i128(n).map(#name)
                 }
                 #[inline]
-                fn from_usize(n: usize) -> Option<Self> {
+                fn from_usize(n: usize) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_usize(n).map(#name)
                 }
                 #[inline]
-                fn from_u8(n: u8) -> Option<Self> {
+                fn from_u8(n: u8) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u8(n).map(#name)
                 }
                 #[inline]
-                fn from_u16(n: u16) -> Option<Self> {
+                fn from_u16(n: u16) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u16(n).map(#name)
                 }
                 #[inline]
-                fn from_u32(n: u32) -> Option<Self> {
+                fn from_u32(n: u32) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u32(n).map(#name)
                 }
                 #[inline]
-                fn from_u128(n: u128) -> Option<Self> {
+                fn from_u128(n: u128) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_u128(n).map(#name)
                 }
                 #[inline]
-                fn from_f32(n: f32) -> Option<Self> {
+                fn from_f32(n: f32) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_f32(n).map(#name)
                 }
                 #[inline]
-                fn from_f64(n: f64) -> Option<Self> {
+                fn from_f64(n: f64) -> ::core::option::Option<Self> {
                     <#inner_ty as #import::FromPrimitive>::from_f64(n).map(#name)
                 }
             }
@@ -339,7 +339,7 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
 
                 quote! {
                     if #from_i64_var == #name::#ident as i64 {
-                        Some(#name::#ident)
+                        ::core::option::Option::Some(#name::#ident)
                     }
                 }
             })
@@ -355,14 +355,14 @@ pub fn from_primitive(input: TokenStream) -> TokenStream {
             impl #import::FromPrimitive for #name {
                 #[allow(trivial_numeric_casts)]
                 #[inline]
-                fn from_i64(#from_i64_var: i64) -> Option<Self> {
+                fn from_i64(#from_i64_var: i64) -> ::core::option::Option<Self> {
                     #(#clauses else)* {
-                        None
+                        ::core::option::Option::None
                     }
                 }
 
                 #[inline]
-                fn from_u64(n: u64) -> Option<Self> {
+                fn from_u64(n: u64) -> ::core::option::Option<Self> {
                     Self::from_i64(n as i64)
                 }
             }
@@ -431,59 +431,59 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
         quote! {
             impl #import::ToPrimitive for #name {
                 #[inline]
-                fn to_i64(&self) -> Option<i64> {
+                fn to_i64(&self) -> ::core::option::Option<i64> {
                     <#inner_ty as #import::ToPrimitive>::to_i64(&self.0)
                 }
                 #[inline]
-                fn to_u64(&self) -> Option<u64> {
+                fn to_u64(&self) -> ::core::option::Option<u64> {
                     <#inner_ty as #import::ToPrimitive>::to_u64(&self.0)
                 }
                 #[inline]
-                fn to_isize(&self) -> Option<isize> {
+                fn to_isize(&self) -> ::core::option::Option<isize> {
                     <#inner_ty as #import::ToPrimitive>::to_isize(&self.0)
                 }
                 #[inline]
-                fn to_i8(&self) -> Option<i8> {
+                fn to_i8(&self) -> ::core::option::Option<i8> {
                     <#inner_ty as #import::ToPrimitive>::to_i8(&self.0)
                 }
                 #[inline]
-                fn to_i16(&self) -> Option<i16> {
+                fn to_i16(&self) -> ::core::option::Option<i16> {
                     <#inner_ty as #import::ToPrimitive>::to_i16(&self.0)
                 }
                 #[inline]
-                fn to_i32(&self) -> Option<i32> {
+                fn to_i32(&self) -> ::core::option::Option<i32> {
                     <#inner_ty as #import::ToPrimitive>::to_i32(&self.0)
                 }
                 #[inline]
-                fn to_i128(&self) -> Option<i128> {
+                fn to_i128(&self) -> ::core::option::Option<i128> {
                     <#inner_ty as #import::ToPrimitive>::to_i128(&self.0)
                 }
                 #[inline]
-                fn to_usize(&self) -> Option<usize> {
+                fn to_usize(&self) -> ::core::option::Option<usize> {
                     <#inner_ty as #import::ToPrimitive>::to_usize(&self.0)
                 }
                 #[inline]
-                fn to_u8(&self) -> Option<u8> {
+                fn to_u8(&self) -> ::core::option::Option<u8> {
                     <#inner_ty as #import::ToPrimitive>::to_u8(&self.0)
                 }
                 #[inline]
-                fn to_u16(&self) -> Option<u16> {
+                fn to_u16(&self) -> ::core::option::Option<u16> {
                     <#inner_ty as #import::ToPrimitive>::to_u16(&self.0)
                 }
                 #[inline]
-                fn to_u32(&self) -> Option<u32> {
+                fn to_u32(&self) -> ::core::option::Option<u32> {
                     <#inner_ty as #import::ToPrimitive>::to_u32(&self.0)
                 }
                 #[inline]
-                fn to_u128(&self) -> Option<u128> {
+                fn to_u128(&self) -> ::core::option::Option<u128> {
                     <#inner_ty as #import::ToPrimitive>::to_u128(&self.0)
                 }
                 #[inline]
-                fn to_f32(&self) -> Option<f32> {
+                fn to_f32(&self) -> ::core::option::Option<f32> {
                     <#inner_ty as #import::ToPrimitive>::to_f32(&self.0)
                 }
                 #[inline]
-                fn to_f64(&self) -> Option<f64> {
+                fn to_f64(&self) -> ::core::option::Option<f64> {
                     <#inner_ty as #import::ToPrimitive>::to_f64(&self.0)
                 }
             }
@@ -522,7 +522,7 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
             }
         } else {
             quote! {
-                Some(match *self {
+                ::core::option::Option::Some(match *self {
                     #(#variants,)*
                 })
             }
@@ -532,12 +532,12 @@ pub fn to_primitive(input: TokenStream) -> TokenStream {
             impl #import::ToPrimitive for #name {
                 #[inline]
                 #[allow(trivial_numeric_casts)]
-                fn to_i64(&self) -> Option<i64> {
+                fn to_i64(&self) -> ::core::option::Option<i64> {
                     #match_expr
                 }
 
                 #[inline]
-                fn to_u64(&self) -> Option<u64> {
+                fn to_u64(&self) -> ::core::option::Option<u64> {
                     self.to_i64().map(|x| x as u64)
                 }
             }
@@ -617,7 +617,7 @@ pub fn num_cast(input: TokenStream) -> TokenStream {
     let impl_ = quote! {
         impl #import::NumCast for #name {
             #[inline]
-            fn from<T: #import::ToPrimitive>(n: T) -> Option<Self> {
+            fn from<T: #import::ToPrimitive>(n: T) -> ::core::option::Option<Self> {
                 <#inner_ty as #import::NumCast>::from(n).map(#name)
             }
         }
@@ -695,7 +695,7 @@ pub fn num(input: TokenStream) -> TokenStream {
         impl #import::Num for #name {
             type FromStrRadixErr = <#inner_ty as #import::Num>::FromStrRadixErr;
             #[inline]
-            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
+            fn from_str_radix(s: &str, radix: u32) -> ::core::result::Result<Self, Self::FromStrRadixErr> {
                 <#inner_ty as #import::Num>::from_str_radix(s, radix).map(#name)
             }
         }
