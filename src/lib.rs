@@ -992,3 +992,21 @@ pub fn signed(input: TokenStream) -> TokenStream {
 
     import.wrap("Signed", &name, impl_).into()
 }
+
+/// Derives [`num_traits::Unsigned`][unsigned].  The inner type must already implement
+/// `Unsigned`.
+///
+/// [unsigned]: https://docs.rs/num/latest/num/traits/trait.Unsigned.html
+#[proc_macro_derive(Unsigned, attributes(num_traits))]
+pub fn unsigned(input: TokenStream) -> TokenStream {
+    let ast = parse!(input as syn::DeriveInput);
+    let name = &ast.ident;
+
+    let import = NumTraits::new(&ast);
+
+    let impl_ = quote! {
+        impl #import::Unsigned for #name {}
+    };
+
+    import.wrap("Unsigned", &name, impl_).into()
+}
