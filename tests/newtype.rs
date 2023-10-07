@@ -11,7 +11,7 @@ use std::ops::Neg;
 struct MyNum(u32);
 
 #[test]
-fn test_derive_unsingned_works() {
+fn test_derive_unsigned_works() {
     fn do_nothing_on_unsigned(_input: impl Unsigned) {}
 
     let x = MyNum(42);
@@ -104,5 +104,5 @@ fn test_float() {
 
 #[test]
 fn test_signed() {
-    assert_eq!(MyFloat(-2.0).is_negative(), true)
+    assert!(MyFloat(-2.0).is_negative())
 }
