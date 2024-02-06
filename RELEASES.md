@@ -1,3 +1,9 @@
+# Release 0.4.2 (2024-02-06)
+
+- [Use anon-const to avoid RFC 3373 warnings.][62]
+
+[62]: https://github.com/rust-num/num-derive/pull/62
+
 # Release 0.4.1 (2023-10-07)
 
 - [Make `Float` work with `no_std`][56] -- thanks @vkahl!
