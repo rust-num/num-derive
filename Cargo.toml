@@ -10,7 +10,7 @@ name = "num-derive"
 repository = "https://github.com/rust-num/num-derive"
 version = "0.4.1"
 readme = "README.md"
-exclude = ["/bors.toml", "/ci/*", "/.github/*"]
+exclude = ["/ci/*", "/.github/*"]
 edition = "2021"
 rust-version = "1.56.0"
 
