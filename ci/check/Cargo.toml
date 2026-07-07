@@ -3,6 +3,7 @@ name = "check"
 version = "0.1.0"
 authors = ["Josh Stone <cuviper@gmail.com>"]
 edition = "2018"
+rust-version = "1.56.0"
 
 [dependencies.num-derive]
 path = "../.."

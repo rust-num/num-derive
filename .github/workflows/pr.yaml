@@ -20,7 +20,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-      - run: cargo build
       - run: ./ci/test_full.sh
 
   fmt:
