@@ -21,6 +21,14 @@ check_version() {
   ]]
 }
 
+export CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback
+generate_lockfile() {
+  cargo generate-lockfile
+  if ! check_version 1.85 ; then
+    cargo +stable update
+  fi
+}
+
 echo "Testing $CRATE on rustc $RUST_VERSION"
 if ! check_version $MSRV ; then
   echo "The minimum for $CRATE is rustc $MSRV"
@@ -29,6 +37,8 @@ fi
 
 FEATURES=()
 echo "Testing supported features: ${FEATURES[*]}"
+
+generate_lockfile
 
 set -x
 
@@ -47,5 +57,7 @@ cargo build --features="${FEATURES[*]}"
 cargo test --features="${FEATURES[*]}"
 
 # these CI crates keep tighter control over dependencies
+(cd ci/check && generate_lockfile)
 cargo check --verbose --manifest-path ci/check/Cargo.toml
+(cd ci/import && generate_lockfile)
 cargo check --verbose --manifest-path ci/import/Cargo.toml

@@ -3,7 +3,7 @@
 [![crate](https://img.shields.io/crates/v/num-derive.svg)](https://crates.io/crates/num-derive)
 [![documentation](https://docs.rs/num-derive/badge.svg)](https://docs.rs/num-derive)
 [![minimum rustc 1.56](https://img.shields.io/badge/rustc-1.56+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
-[![build status](https://github.com/rust-num/num-derive/workflows/master/badge.svg)](https://github.com/rust-num/num-derive/actions)
+[![build status](https://github.com/rust-num/num-derive/actions/workflows/main.yaml/badge.svg)](https://github.com/rust-num/num-derive/actions/workflows/main.yaml)
 
 Procedural macros to derive numeric traits in Rust.
 
