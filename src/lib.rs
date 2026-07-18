@@ -945,6 +945,215 @@ pub fn float(input: TokenStream) -> TokenStream {
     import.wrap(impl_).into()
 }
 
+/// Derives [`num_traits::real::Real`][real] for newtypes.  The inner type must already implement
+/// `Real`.
+///
+/// [real]: https://docs.rs/num-traits/0.2/num_traits/real/trait.Real.html
+#[proc_macro_derive(Real, attributes(num_traits))]
+pub fn real(input: TokenStream) -> TokenStream {
+    let ast = parse!(input as syn::DeriveInput);
+    let name = &ast.ident;
+    let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+
+    let import = NumTraits::new(&ast);
+
+    let impl_ = quote! {
+        impl #import::real::Real for #name {
+            #[inline]
+            fn min_value() -> Self {
+                #name(<#inner_ty as #import::real::Real>::min_value())
+            }
+            #[inline]
+            fn min_positive_value() -> Self {
+                #name(<#inner_ty as #import::real::Real>::min_positive_value())
+            }
+            #[inline]
+            fn epsilon() -> Self {
+                #name(<#inner_ty as #import::real::Real>::epsilon())
+            }
+            #[inline]
+            fn max_value() -> Self {
+                #name(<#inner_ty as #import::real::Real>::max_value())
+            }
+            #[inline]
+            fn floor(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::floor(self.0))
+            }
+            #[inline]
+            fn ceil(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::ceil(self.0))
+            }
+            #[inline]
+            fn round(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::round(self.0))
+            }
+            #[inline]
+            fn trunc(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::trunc(self.0))
+            }
+            #[inline]
+            fn fract(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::fract(self.0))
+            }
+            #[inline]
+            fn abs(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::abs(self.0))
+            }
+            #[inline]
+            fn signum(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::signum(self.0))
+            }
+            #[inline]
+            fn is_sign_positive(self) -> bool {
+                <#inner_ty as #import::real::Real>::is_sign_positive(self.0)
+            }
+            #[inline]
+            fn is_sign_negative(self) -> bool {
+                <#inner_ty as #import::real::Real>::is_sign_negative(self.0)
+            }
+            #[inline]
+            fn mul_add(self, a: Self, b: Self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::mul_add(self.0, a.0, b.0))
+            }
+            #[inline]
+            fn recip(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::recip(self.0))
+            }
+            #[inline]
+            fn powi(self, n: i32) -> Self {
+                #name(<#inner_ty as #import::real::Real>::powi(self.0, n))
+            }
+            #[inline]
+            fn powf(self, n: Self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::powf(self.0, n.0))
+            }
+            #[inline]
+            fn sqrt(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::sqrt(self.0))
+            }
+            #[inline]
+            fn exp(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::exp(self.0))
+            }
+            #[inline]
+            fn exp2(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::exp2(self.0))
+            }
+            #[inline]
+            fn ln(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::ln(self.0))
+            }
+            #[inline]
+            fn log(self, base: Self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::log(self.0, base.0))
+            }
+            #[inline]
+            fn log2(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::log2(self.0))
+            }
+            #[inline]
+            fn log10(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::log10(self.0))
+            }
+            #[inline]
+            fn to_degrees(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::to_degrees(self.0))
+            }
+            #[inline]
+            fn to_radians(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::to_radians(self.0))
+            }
+            #[inline]
+            fn max(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::max(self.0, other.0))
+            }
+            #[inline]
+            fn min(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::min(self.0, other.0))
+            }
+            #[inline]
+            fn abs_sub(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::abs_sub(self.0, other.0))
+            }
+            #[inline]
+            fn cbrt(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::cbrt(self.0))
+            }
+            #[inline]
+            fn hypot(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::hypot(self.0, other.0))
+            }
+            #[inline]
+            fn sin(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::sin(self.0))
+            }
+            #[inline]
+            fn cos(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::cos(self.0))
+            }
+            #[inline]
+            fn tan(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::tan(self.0))
+            }
+            #[inline]
+            fn asin(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::asin(self.0))
+            }
+            #[inline]
+            fn acos(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::acos(self.0))
+            }
+            #[inline]
+            fn atan(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::atan(self.0))
+            }
+            #[inline]
+            fn atan2(self, other: Self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::atan2(self.0, other.0))
+            }
+            #[inline]
+            fn sin_cos(self) -> (Self, Self) {
+                let (x, y) = <#inner_ty as #import::real::Real>::sin_cos(self.0);
+                (#name(x), #name(y))
+            }
+            #[inline]
+            fn exp_m1(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::exp_m1(self.0))
+            }
+            #[inline]
+            fn ln_1p(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::ln_1p(self.0))
+            }
+            #[inline]
+            fn sinh(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::sinh(self.0))
+            }
+            #[inline]
+            fn cosh(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::cosh(self.0))
+            }
+            #[inline]
+            fn tanh(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::tanh(self.0))
+            }
+            #[inline]
+            fn asinh(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::asinh(self.0))
+            }
+            #[inline]
+            fn acosh(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::acosh(self.0))
+            }
+            #[inline]
+            fn atanh(self) -> Self {
+                #name(<#inner_ty as #import::real::Real>::atanh(self.0))
+            }
+        }
+    };
+
+    import.wrap(impl_).into()
+}
+
 /// Derives [`num_traits::Signed`][signed] for newtypes.  The inner type must already implement
 /// `Signed`.
 ///
