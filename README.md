@@ -35,16 +35,6 @@ enum Color {
 }
 ```
 
-## Optional features
-
-- **`full-syntax`** — Enables `num-derive` to handle enum discriminants
-  represented by complex expressions. Usually can be avoided by
-  [utilizing constants], so only use this feature if namespace pollution is
-  undesired and [compile time doubling] is acceptable.
-
-[utilizing constants]: https://github.com/rust-num/num-derive/pull/3#issuecomment-359044704
-[compile time doubling]: https://github.com/rust-num/num-derive/pull/3#issuecomment-359172588
-
 ## Releases
 
 Release notes are available in [RELEASES.md](RELEASES.md).
