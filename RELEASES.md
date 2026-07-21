@@ -1,3 +1,7 @@
+# Release 0.5.1 (2026-07-20)
+
+- Remove mention of the old "full-syntax" feature.
+
 # Release 0.5.0 (2026-07-20)
 
 - [Upgrade to `syn v3`.][71]
