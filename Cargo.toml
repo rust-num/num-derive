@@ -12,7 +12,7 @@ version = "0.4.2"
 readme = "README.md"
 exclude = ["/ci/*", "/.github/*"]
 edition = "2021"
-rust-version = "1.56.0"
+rust-version = "1.71.0"
 
 [dependencies]
 proc-macro2 = "1"
