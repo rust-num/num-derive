@@ -17,7 +17,7 @@ rust-version = "1.56.0"
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = "2.0.5"
+syn = "3"
 
 [dev-dependencies]
 num = "0.4"
