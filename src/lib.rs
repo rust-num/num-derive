@@ -695,6 +695,26 @@ pub fn num(input: TokenStream) -> TokenStream {
     import.wrap(impl_).into()
 }
 
+/// Derives [`core::ops::Neg`][neg] for newtypes.  The inner type must already implement `Neg`.
+///
+/// [neg]: https://doc.rust-lang.org/stable/core/ops/trait.Neg.html
+#[proc_macro_derive(Neg, attributes(num_traits))]
+pub fn neg(input: TokenStream) -> TokenStream {
+    let ast = parse!(input as syn::DeriveInput);
+    let name = &ast.ident;
+    let inner_ty = newtype_inner(&ast.data).expect(NEWTYPE_ONLY);
+    let impl_ = quote! {
+        impl ::core::ops::Neg for #name {
+            type Output = Self;
+            #[inline]
+            fn neg(self) -> Self {
+                #name(<#inner_ty as ::core::ops::Neg>::neg(self.0))
+            }
+        }
+    };
+    impl_.into()
+}
+
 /// Derives [`num_traits::Float`][float] for newtypes.  The inner type must already implement
 /// `Float`.
 ///
