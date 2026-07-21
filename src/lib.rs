@@ -21,7 +21,7 @@
 //! ```toml
 //! [dependencies]
 //! num-traits = "0.2"
-//! num-derive = "0.3"
+//! num-derive = "0.5"
 //! ```
 //!
 //! Then you can derive traits on your own types:

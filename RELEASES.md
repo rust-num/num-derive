@@ -1,3 +1,10 @@
+# Release 0.5.0 (2026-07-20)
+
+- [Upgrade to `syn v3`.][71]
+  - This raises the minimum supported rustc to 1.71.
+
+[71]: https://github.com/rust-num/num-derive/pull/71
+
 # Release 0.4.2 (2024-02-06)
 
 - [Use anon-const to avoid RFC 3373 warnings.][62]
