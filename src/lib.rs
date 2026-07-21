@@ -9,7 +9,6 @@
 // except according to those terms.
 
 #![crate_type = "proc-macro"]
-#![doc(html_root_url = "https://docs.rs/num-derive/0.3")]
 #![recursion_limit = "512"]
 
 //! Procedural macros to derive numeric traits in Rust.
@@ -21,7 +20,7 @@
 //! ```toml
 //! [dependencies]
 //! num-traits = "0.2"
-//! num-derive = "0.3"
+//! num-derive = "0.5"
 //! ```
 //!
 //! Then you can derive traits on your own types:

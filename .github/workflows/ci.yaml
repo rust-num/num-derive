@@ -8,14 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [1.56.0, stable, beta, nightly]
+        rust: [1.71.0, stable, beta, nightly]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        if: startsWith(matrix.rust, '1')
-        with:
-          path: ~/.cargo/registry/index
-          key: cargo-${{ matrix.rust }}-git-index
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -39,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.70.0
+      - uses: dtolnay/rust-toolchain@1.71.0
         with:
           components: rustfmt
       - run: cargo fmt --all --check
